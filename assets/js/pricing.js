@@ -1,41 +1,19 @@
-// const initInjectUsdPrice = () => {
-//     const depoItems = document.getElementsByTagName('cw-deposit-listed')
-//     for (const node of depoItems) {
-//         injectUsdPrice(node)
-//     }
-// }
-
-// const look4InjectUsdPrice = setInterval(()=>{
-//     const depoScrollable = document.getElementsByClassName('trade-list')[0]
-//      if (depoScrollable) {
-//          clearInterval(look4InjectUsdPrice)
-//          setTimeout(()=>{
-//              initInjectUsdPrice()
-//          },900)
-//      }
-// },50)
-
 const look4rates = setInterval(()=>{
     if (Object.keys(rates).length > 0 && Object.keys(prices).length > 0) {
         clearInterval(look4rates)
-        addForm();
+        startMutationObserver();
     }
 },50)
 
-async function addForm() {
+async function startMutationObserver() {
     const observer = new MutationObserver(function(mutationsList, observer) {
         for (let mutation of mutationsList) {
             if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
                 for (let node of mutation.addedNodes) {
-
-                    if (node instanceof HTMLElement && node.localName == 'cw-csgo-market-item-card'
+                    if (node instanceof HTMLElement && node.localName === 'cw-csgo-market-item-card'
                         && !node.firstChild.classList.contains('horizontal')) {
                         setBuffValue(node);
                     }
-
-                    // if (node instanceof HTMLElement && node.localName == 'cw-deposit-listed') {
-                    //     injectUsdPrice(node);
-                    // }
                 }
             }
         }
@@ -43,55 +21,24 @@ async function addForm() {
     observer.observe(document.body, { attributes: true, childList: true, subtree: true });
 }
 
-const injectUsdPrice = async (node) => {
-    let header = node.querySelector('header')
-    try{
-        node.querySelector('header > div').remove()
-    }catch(e){
-    }
 
-    let coinsPrice = node.querySelector("div > cw-csgo-market-item-card > div > div > div.d-flex.flex-column.justify-content-between.flex-1.details-col.ng-star-inserted > div.d-flex.justify-content-between.align-items-center.position-relative.ng-star-inserted > cw-pretty-balance > span").innerText.replace(',','')
-
-    let usdValue = Number(coinsPrice * 0.66).toFixed(2)
-    let conversionDiv = document.createElement('div')
-    let usdDiv = document.createElement('div')
-    let rmbDiv = document.createElement('div')
-    let empireDiv = document.createElement('div')
-
-    usdDiv.innerText = `${usdValue}$`
-    rmbDiv.innerText = `${(usdValue*7.29).toFixed(2)}¥`
-    empireDiv.innerText = `${(usdValue*0.625).toFixed(2)} ec`
-
-    conversionDiv.style.display = 'flex'
-    conversionDiv.style.justifyContent = 'space-around'
-    conversionDiv.style.alignItems = 'center'
-    conversionDiv.style.fontWeight = "bold";
-
-    usdDiv.style.color = '#63bf08'
-    rmbDiv.style.color = '#f5f5f5'
-    empireDiv.style.color = '#E9B10E'
-
-    node.appendChild(conversionDiv)
-    conversionDiv.appendChild(usdDiv)
-    conversionDiv.appendChild(rmbDiv)
-    conversionDiv.appendChild(empireDiv)
-    header.style.justifyContent = 'center'
-}
-
-function drawCustomForm(calcRes, calc, rate, item) {
-
+function drawRealMarkup(calcRes, calc) {
     let span = document.createElement('span')
-    let r = "🔴 +" + calc + " %"
-    let c = "🔵 " + calc + " %"
-    let o = "🟢 " + calc + " %"
+    span.style.fontWeight = '500'
+    span.style.color = 'white'
 
-    if (calcRes == 'Overpriced')  span.innerText = r;
-    if (calcRes == 'Underpriced') span.innerText = c;
-    if (calcRes == 'Goodpriced')  span.innerText = o;
+    let r = "🔴 +" + calc + "%"
+    let c = "🔵 " + calc + "%"
+    let o = "🟢 " + calc + "%"
+
+    if (calcRes === 'Overpriced') span.innerText = r;
+    if (calcRes === 'Underpriced') span.innerText = c;
+    if (calcRes === 'Goodpriced') span.innerText = o;
 
     divInner.appendChild(span)
     return divInner;
 }
+
 
 function setBuffValue(item) {
     var itemInfo = {};
@@ -147,7 +94,6 @@ function setBuffValue(item) {
                 var phase = f
             }
 
-            //FIX for Black Pearls
             //if doppler is a Black Pearl
             else if (f == 'Black' && s == 'Pearl'){
                 itemInfo.skinName = 'Black Pearl'
@@ -259,26 +205,15 @@ function setBuffValue(item) {
             if (price_obj === undefined) return;
             if (price_obj?.buff?.price) {
                 buff_usd = price_obj.buff.price/100
-            }
-            break;
-
-        case 'csgotrader':
-            if (phase !== undefined){
-                price_obj = prices[itemName]
-                if (price_obj === undefined) return;
-                buff_usd = price_obj.buff163.starting_at.doppler[phase]
-            }else{
-                price_obj = prices[itemName]
-                if (price_obj === undefined) return;
-                buff_usd = price_obj.buff163.starting_at.price
+                liquidity=price_obj.liquidity
+                isInflated=price_obj.buff.isInflated
             }
             break;
     }
 
-
     let tbuffVal = buff_usd / rate;
     let buffVal = Math.floor(tbuffVal * 100) / 100
-    let calc =  Math.floor(rollPrice/buffVal*100) - 100
+    let calc =  ((rollPrice/buffVal*100) - 100).toFixed(1)
 
     let parent_el = item.querySelector('div > div:nth-child(7)')
     if (!parent_el) {
@@ -290,7 +225,22 @@ function setBuffValue(item) {
     divInner.style.flexDirection= 'column'
     divInner.style.justifyContent= 'center'
     divInner.style.alignItems= 'center'
+
+
     let parentElSpans = parent_el.getElementsByTagName('span')
+    let inflated_parent = item.querySelector('div > div > div > span:nth-of-type(2)')
+    let liquidity_parent
+
+    if (isInflated) {
+        drawIsInflated(inflated_parent)
+        inflated_parent.firstElementChild.remove()
+    }
+
+    if (!isStickered) {
+         liquidity_parent = item.querySelector('div > div > div:nth-of-type(6)')
+    }else{
+         liquidity_parent = item.querySelector('div > div > div:nth-of-type(7)')
+    }
 
     if (parentElSpans.length > 1 ) {
         let delSpan = parentElSpans[1]
@@ -299,11 +249,35 @@ function setBuffValue(item) {
         divInner.appendChild(delSpan)
     }
 
+
     let res = evalDisplay(rollPrice, buffVal)
     parent_el.appendChild(divInner)
-
-    parent_el.appendChild(drawCustomForm(res, calc, rate, item))
+    parent_el.appendChild(drawRealMarkup(res, calc))
+    drawLiquidityData(liquidity, liquidity_parent)
 }
+
+
+function drawLiquidityData(liq, parent){
+    let span = document.createElement('span')
+    span.style.fontWeight = '500'
+    span.style.color = '#34ebeb'
+
+    span.innerText = `LIQ: ${liq.toFixed(0)}%`
+    parent.appendChild(span)
+}
+
+
+function drawIsInflated(parent){
+    let span = document.createElement('span')
+    let div = document.createElement('div')
+    span.style.fontWeight = '500'
+    span.style.color = '#8d0000'
+
+    span.innerText = `INFLATED`
+    div.appendChild(span)
+    parent.appendChild(div)
+}
+
 
 function evalDisplay(rollPrice, buffPrice){
     let v = rollPrice / buffPrice;

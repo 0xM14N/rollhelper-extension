@@ -1,6 +1,6 @@
 const ratesURL = chrome.runtime.getURL('assets/rates/rates.json');
 
-console.log(`%c[ROLLHELPER] [v1.0.3]`, "color:#e0e0e0;font-weight: bold; font-size:23px")
+console.log(`%c[ROLLHELPER] [v1.0.4]`, "color:#e0e0e0;font-weight: bold; font-size:23px")
 
 let itemID
 let userID

@@ -1,7 +1,7 @@
 {
   "name": "ROLLHELPER - Extension",
   "description": "Helping the traders on csgoroll.com",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "https://github.com/0xM14N/",
   "manifest_version": 3,
   "icons": {
@@ -36,12 +36,12 @@
 
     {
       "matches": [
-        "https://www.csgoroll.com/en/top-up/steam/csgo",
-        "https://www.csgoroll.gg/en/top-up/steam/csgo",
-        "https://www.csgorolltr.com/en/top-up/steam/csgo",
-        "https://www.csgoroll.com/en/withdraw/csgo/p2p",
-        "https://www.csgoroll.gg/en/withdraw/csgo/p2p",
-        "https://www.csgorolltr.com/en/withdraw/csgo/p2p"
+        "https://www.csgoroll.com/top-up/steam/csgo",
+        "https://www.csgoroll.gg/top-up/steam/csgo",
+        "https://www.csgorolltr.com/top-up/steam/csgo",
+        "https://www.csgoroll.com/withdraw/csgo/p2p",
+        "https://www.csgoroll.gg/withdraw/csgo/p2p",
+        "https://www.csgorolltr.com/withdraw/csgo/p2p"
       ],
       "js": ["assets/js/pricing.js"],
       "css": ["assets/css/depositPage.css"]
