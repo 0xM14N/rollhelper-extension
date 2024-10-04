@@ -1,0 +1,71 @@
+{
+	"name": "ROLLHELPER",
+	"description": "Helping the traders on csgoroll",
+	"version": "1.0.5",
+	"author": "https://github.com/0xM14N/",
+	"manifest_version": 3,
+	"icons": {
+		"16": "assets/ico/coin-ico.png",
+		"32": "assets/ico/coin-ico.png",
+		"48": "assets/ico/coin-ico-large.png",
+		"128": "assets/ico/coin-ico-large.png"
+	},
+	"background": {
+		"service_worker": "src/background/background.js"
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"https://www.csgoroll.com/*",
+				"https://www.csgoroll.gg/*",
+				"https://www.csgorolltr.com/*"
+			],
+			"js": [
+				"src/content/rollhelper.js",
+				"src/content/buttons.js",
+				"src/Utils/utils.js",
+				"src/csgoroll-api/wsPayloads.js",
+				"src/csgoroll-api/api.js",
+				"src/storage/storage.js",
+				"src/notifications/sendDiscordWebhook.js",
+				"src/notifications/sendPushoverMessage.js"
+			]
+		},
+		{
+			"matches": [
+				"https://www.csgoroll.com/top-up/steam/csgo",
+				"https://www.csgoroll.gg/top-up/steam/csgo",
+				"https://www.csgorolltr.com/top-up/steam/csgo",
+				"https://www.csgoroll.com/withdraw/csgo/p2p",
+				"https://www.csgoroll.gg/withdraw/csgo/p2p",
+				"https://www.csgorolltr.com/withdraw/csgo/p2p"
+			],
+			"js": ["src/content/priceCheckInjector.js"],
+			"css": ["src/css/global.css"]
+		}
+	],
+	"action": {
+		"default_popup": "src/popup/html/popup.html",
+		"scripts": ["src/popup/js/popup.js"],
+		"default_icon": {
+			"16": "assets/ico/coin-ico.png"
+		}
+	},
+	"permissions": ["storage", "tabs"],
+	"host_permissions": [
+		"https://www.csgoroll.com/*",
+		"https://www.csgorolltr.com/*",
+		"https://www.csgoroll.gg/*",
+		"https://prices.csgotrader.app/latest/prices_v6.json"
+	],
+	"web_accessible_resources": [
+		{
+			"matches": ["<all_urls>"],
+			"resources": [
+				"assets/rates/rates.json",
+				"assets/ico/pelogo.png",
+				"assets/ico/cstlogo.png"
+			]
+		}
+	]
+}

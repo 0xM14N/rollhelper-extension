@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>RollHELPER</title>
+		<link rel="stylesheet" href="../css/style.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+			crossorigin="anonymous"
+		/>
+	</head>
+	<body>
+		<div class="d-flex p-3 justify-content-center">
+			<a href="https://github.com/0xM14N/rollhelper-extension" target="_blank">
+				<img
+					src="../../../assets/ico/rollHelper.png"
+					alt="helper-logo"
+					width="95"
+					height="35"
+				/>
+			</a>
+		</div>
+		<div class="container">
+			<div class="row p-2">
+				<div class="col-12 d-flex justify-content-center">
+					<label class="switch">
+						<input type="checkbox" id="depoSwitch" />
+						<span class="slider round"></span>
+					</label>
+				</div>
+				<div class="col-12">
+					<div class="setting-desc">AUTOACCEPT</div>
+				</div>
+			</div>
+		</div>
+		<div class="row mt">
+			<div class="col-12 d-flex justify-content-center">
+				<label class="switch-sm">
+					<input type="checkbox" id="sendOfferSwitch" />
+					<span class="slider-sm round"></span>
+				</label>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-12 d-flex justify-content-center desc-text-sm">
+				Send Offers
+			</div>
+		</div>
+		<div class="container d-flex justify-content-center">
+			<hr />
+		</div>
+		<div class="col-12 d-flex justify-content-center">
+			<p class="desc-key-sm">Steam offer message</p>
+		</div>
+		<div class="col-12 d-flex justify-content-center mb-2">
+			<input
+				type="text"
+				placeholder="Steam Offer Message"
+				class="offerMsgInput"
+				id="steamOfferMessageInput"
+				title="Steam Offer Message"
+			/>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-12 d-flex justify-content-center mb-2 mt-2">
+					<a href="settings.html">
+						<button class="roll-button" id="">SETTINGS</button>
+					</a>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-12 d-flex justify-content-center pb-3">
+					<button class="roll-button" id="saveSettings">SAVE</button>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-12 d-flex justify-content-center">
+					<p class="footer-text m-0 d-flex justify-content-center">
+						Created by
+					</p>
+				</div>
+				<div class="col-12 d-flex justify-content-center mb-1">
+					<a href="https://github.com/0xM14N" target="_blank">
+						<button class="button" data-text="Awesome">
+							<span class="actual-text">&nbsp;MAIN&nbsp;</span>
+							<span aria-hidden="true" class="hover-text"
+								>&nbsp;MAIN&nbsp;</span
+							>
+						</button>
+					</a>
+				</div>
+			</div>
+		</div>
+
+		<script src="../js/popup.js"></script>
+	</body>
+</html>
