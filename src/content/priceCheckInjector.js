@@ -163,23 +163,34 @@ function setBuffValue(item) {
 	);
 	if (ext) {
 		// we are on depo page
-		ext = ext.innerHTML.trim().split(' ')[0];
-
 		if (isSticker) {
+			ext = ext.innerHTML.trim();
 			itemInfo.skinExterior = ' (' + ext + ')';
 			let nameArr = itemName.split(' ');
-			let f = 0;
-			for (let i = 0; i < nameArr.length; i++) {
-				if (nameArr[i] === '|') {
-					f++;
-					if (f === 2) {
-						nameArr[i - 1] += itemInfo.skinExterior;
-						break;
+
+			if (itemName.split('|').length === 2) {
+				// sticker with only one | char
+				itemName = itemName + itemInfo.skinExterior;
+			} else {
+				let f = 0;
+				for (let i = 0; i < nameArr.length; i++) {
+					if (nameArr[i] === '|') {
+						f++;
+						if (f === 2) {
+							nameArr[i - 1] += itemInfo.skinExterior;
+							break;
+						}
 					}
 				}
+				itemName = nameArr.join(' ');
 			}
-			itemName = nameArr.join(' ');
 		} else {
+			let ext = item
+				.querySelector(
+					'div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > span:nth-child(2)',
+				)
+				.innerHTML.split(' ')[0];
+
 			if (ext === 'FN') {
 				itemInfo.skinExterior = exterior;
 				itemName += ' (Factory New)';
@@ -208,33 +219,10 @@ function setBuffValue(item) {
 	} else {
 		//p2p page float value selector:
 		if (isSticker) {
-			//  HOLO - bg-legendary
-			//  FOIL - bg-exotic
-			//  NORMAL - bg-high
-			//  GOLD - bg-extraordinary
-			//  HOLO - bg-remarkable
-			//  GLITTER - has same class as holo = no luck detecting = shows up holo pricing for now
-			let ext;
-			let ext_check_classList = item.querySelector(
-				'div > div > div:nth-child(4) > span',
-			).classList;
-			switch (true) {
-				case ext_check_classList.contains('bg-legendary'):
-					ext = 'Holo';
-					break;
-				case ext_check_classList.contains('bg-exotic'):
-					ext = 'Foil';
-					break;
-				case ext_check_classList.contains('bg-remarkable'):
-					ext = 'Holo';
-					break;
-				case ext_check_classList.contains('bg-extraordinary'):
-					ext = 'Gold';
-					break;
-				default:
-					ext = '';
-			}
-			if (ext != '') {
+			let ext = item
+				.querySelector('div > div > div > span:nth-of-type(2)')
+				.innerHTML.trim();
+			if (ext != 'Sticker') {
 				itemInfo.skinExterior = ' (' + ext + ')';
 				let nameArr = itemName.split(' ');
 				let f = 0;
@@ -250,7 +238,10 @@ function setBuffValue(item) {
 				itemName = nameArr.join(' ');
 			}
 		} else {
-			let extElement = item.querySelector('cw-item-float-indicator > span');
+			//let extElement = item.querySelector('cw-item-float-indicator > span');
+			let extElement = item.querySelector(
+				'cw-item-float-indicator > div:nth-of-type(2) > span:nth-of-type(1)',
+			);
 			let ext = extElement ? extElement.textContent.trim().substring(0, 2) : '';
 
 			if (ext === 'FN') {
@@ -279,7 +270,7 @@ function setBuffValue(item) {
 			}
 		}
 	}
-
+	//console.log(itemName)
 	let rollPrice;
 	if (!isStickered) {
 		rollPrice =
@@ -323,7 +314,10 @@ function setBuffValue(item) {
 		case 'pricempire':
 			if (phase !== undefined) itemName = itemName + ' - ' + phase;
 			price_obj = prices[itemName];
-			if (price_obj === undefined) return;
+			if (price_obj === undefined) {
+				console.log(`[PRICECHECK ERROR]: ${itemName}`);
+				return;
+			}
 			if (price_obj?.buff?.price) {
 				buff_usd = price_obj.buff.price / 100;
 				liquidity = price_obj.liquidity;
