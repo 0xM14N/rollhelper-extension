@@ -1,5 +1,5 @@
 console.log(
-	`%c[ROLLHELPER] [v1.1.0]`,
+	`%c[ROLLHELPER] [v1.1.1]`,
 	'color:#e0e0e0;font-weight: bold; font-size:23px',
 );
 

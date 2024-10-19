@@ -1,7 +1,8 @@
 coinsCounter = 0;
+invFailFetchCount = 0;
 
+// This function uses csgoroll endpoint to recieve steam inventory data
 const getCurrentSteamInvData = async () => {
-	invFailFetchCount = 0;
 	let afterID = '';
 
 	await fetch(domainUrl, {
@@ -76,7 +77,7 @@ const getCurrentSteamInvData = async () => {
 		})
 		.catch(error => {
 			console.log(
-				`%c[ROLLHELPER - ERROR] -> Failed to load the steam inventory data - trying again in 3 seconds`,
+				`%c[ROLLHELPER - ERROR] -> Failed to load the steam inventory data - trying again in 5 seconds`,
 				errorCSSlog,
 			);
 			console.log(error);
@@ -90,10 +91,14 @@ const getCurrentSteamInvData = async () => {
 						errorCSSlog,
 					);
 				}
-			}, 3000);
+			}, 5000);
 		});
+	updateDisplayCoins();
 };
 
+// With this function we are able to get csgoroll userID which is needed
+// for ws-connections per user tracking, getting steam inventory data
+// via function above this one and balance value
 async function getUserID() {
 	let getUserIDcounter = 0;
 
@@ -128,9 +133,12 @@ async function getUserID() {
 		.then(res => {
 			userID = res.data.currentUser.id;
 			balance = res.data.currentUser.wallets[0].amount;
-
-			coinsCounter += balance;
-			let btn = document.getElementsByClassName('counterCoinButton')[0];
-			if (btn) btn.innerHTML = Math.round(coinsCounter);
+			updateDisplayCoins();
 		});
 }
+
+// This updates the total inventory value of user combined with current balance
+const updateDisplayCoins = () => {
+	let btn = document.getElementsByClassName('counterCoinButton')[0];
+	if (btn) btn.innerHTML = Math.round(coinsCounter + balance);
+};

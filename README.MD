@@ -53,7 +53,7 @@ in order to work properly (_turn on "**Send offers based on query params"**,
 ### LOGS
 
 > If you plan on using logs (F12), I suggest you to set your devtools display
-> only to 'Info' so you wont get spammed by useless csgoroll errors<br>
+> only to 'Info' so you wont get spammed by useless csgoroll errors<br> >
 > ![devtool.png](assets%2Fshowcase%2Fdevtool.png)
 
 ## Showcase
