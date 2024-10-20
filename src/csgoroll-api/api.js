@@ -23,7 +23,7 @@ const getCurrentSteamInvData = async () => {
 				persistedQuery: {
 					version: 1,
 					sha256Hash:
-						'01ea308cc60ffbd5a4671fe8e762c45ebced3f51c88b89ac245a9f590000c140',
+						'21b294b6c6583cc9df6a19780516cc7a69a8bc0a8d58333fcfd36b9421ab9ba8',
 				},
 			},
 		}),
