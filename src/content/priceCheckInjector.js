@@ -238,11 +238,13 @@ function setBuffValue(item) {
 				itemName = nameArr.join(' ');
 			}
 		} else {
-			//let extElement = item.querySelector('cw-item-float-indicator > span');
-			let extElement = item.querySelector(
-				'cw-item-float-indicator > div:nth-of-type(2) > span:nth-of-type(1)',
+     		let extElement = item.querySelector(
+			'cw-item-float-indicator > div:nth-of-type(2) > span:nth-of-type(1)',
 			);
 			let ext = extElement ? extElement.textContent.trim().substring(0, 2) : '';
+            
+            // vanilla knives etc..
+            if (itemInfo.skinName == undefined) ext = '\x3C!---->-';
 
 			if (ext === 'FN') {
 				itemInfo.skinExterior = exterior;
@@ -270,7 +272,7 @@ function setBuffValue(item) {
 			}
 		}
 	}
-	//console.log(itemName)
+    
 	let rollPrice;
 	if (!isStickered) {
 		rollPrice =
