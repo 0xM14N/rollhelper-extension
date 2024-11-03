@@ -163,10 +163,12 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 					}
 					let buff_usd = price_obj.buff.price / 100;
 					let coins_usd = rollprice * rate;
+                    let liquidity = price_obj.liquidity || 0;
+
 					let profit = (
 						100 + parseFloat(((coins_usd - buff_usd) / buff_usd) * 100)
 					).toFixed(2);
-					return [buff_usd, profit, rate];
+					return [buff_usd, profit, rate, liquidity];
 				} catch (err) {
 					console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
 				}
