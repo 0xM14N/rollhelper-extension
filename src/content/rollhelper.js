@@ -1,6 +1,6 @@
 console.log(
 	`%c[ROLLHELPER] [v1.1.1]`,
-	'color:#e0e0e0;font-weight: bold; font-size:23px',
+	'color:#eb0909;font-weight: bold; font-size:23px',
 );
 
 let itemID;
@@ -189,7 +189,7 @@ function connectWSS() {
 					const buffUrl =
 						'https://api.pricempire.com/v1/redirectBuff/' + encodedItemName;
 					console.log(
-						`%c${DateFormater(new Date())} | [DEPOSIT]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity} | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+						`%c${DateFormater(new Date())} | [DEPOSIT]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
 						depositCSSlog,
 					);
 					console.log(buffUrl);
@@ -243,7 +243,7 @@ function connectWSS() {
                     liquidity = eval_res ? eval_res[3] : '-';
 
 					console.log(
-						`%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity} | [MAX MARKUP]: ${maxMarkup}%\n\tROLLNAME: ${rollName}\n\tRollID: ${rollID}\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+						`%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\tROLLNAME: ${rollName}\n\tRollID: ${rollID}\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
 						noticeCSSlog,
 					);
 				}
@@ -297,7 +297,7 @@ function connectWSS() {
 				};
 
 				console.log(
-					`%c${DateFormater(new Date())} | [TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity} | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+					`%c${DateFormater(new Date())} | [TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
 					tradeCompletedCSSlog,
 				);
 				itemInfo.tradeInfo = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%\n[FV: ${float}]`;
@@ -454,7 +454,7 @@ function connectWSS() {
 					const buffUrl =
 						'https://api.pricempire.com/v1/redirectBuff/' + encodedItemName;
 					console.log(
-						`%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity} | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+						`%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
 						withdrawAcceptedCSSlog,
 					);
 					console.log(buffUrl);

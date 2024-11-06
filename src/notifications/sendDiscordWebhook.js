@@ -221,12 +221,16 @@ const sendWebHookDiscord = (
 		},
 	};
 
-	params = templateWebhook[webhookType];
+	const params = templateWebhook[webhookType];
 	fetch(url, {
 		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
+		headers: {'Content-Type': 'application/json'},
 		body: JSON.stringify(params),
-	});
+	})
+		.then(res => {
+			if (res.status !== 204){
+				console.log(`[DISCORD-ERROR]: res.status: ${res.status} | ${res.statusText}`);
+			}
+		})
+		.catch(err => console.log(`[DISCORD-FETCH-ERROR]: ${err.message}`, err))
 };
