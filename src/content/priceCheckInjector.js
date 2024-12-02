@@ -136,7 +136,7 @@ function setBuffValue(item) {
 			}
 
 			// if gamma doppler is a gem -> emerald
-			else if (nameArr.length === 1 && f == 'Emerald' && isKnife(itemName)) {
+			else if (nameArr.length === 1 && f == 'Emerald' && (isKnife(itemName) || itemName.includes('Glock'))) {
 				itemInfo.skinName = f;
 				itemName += ' | ' + 'Gamma Doppler';
 				var phase = 'Emerald';
@@ -242,7 +242,7 @@ function setBuffValue(item) {
 			'cw-item-float-indicator > div:nth-of-type(2) > span:nth-of-type(1)',
 			);
 			let ext = extElement ? extElement.textContent.trim().substring(0, 2) : '';
-            
+
             // vanilla knives etc..
             if (itemInfo.skinName == undefined) ext = '\x3C!---->-';
 
@@ -272,7 +272,7 @@ function setBuffValue(item) {
 			}
 		}
 	}
-    
+
 	let rollPrice;
 	if (!isStickered) {
 		rollPrice =

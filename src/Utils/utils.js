@@ -43,7 +43,7 @@ const isDoppler = marketName => {
 		marketName.includes('Ruby') ||
 		marketName.includes('Black Pearl') ||
 		marketName.includes('Sapphire')) &&
-		isKnife(marketName)
+		(isKnife(marketName) || marketName.includes('Glock'))
 		? true
 		: false;
 };
