@@ -1,6 +1,46 @@
 coinsCounter = 0;
 invFailFetchCount = 0;
 
+// New request to accept trade
+const fetchAcceptTrade = async (tradeid) => {
+	const response = await fetch('https://api.csgoroll.com/graphql', {
+		method: 'POST',
+		headers: {
+			Accept: 'application/json, text/plain, */*',
+			'Content-Type': 'application/json',
+		},
+		credentials: 'include',
+		body: JSON.stringify({
+			operationName: 'ProcessTrade',
+			variables: {
+				input: {
+					tradeId: tradeid,
+				},
+			},
+			query: `
+				mutation ProcessTrade($input: ProcessTradeInput!) {
+					processTrade(input: $input) {
+						trade {
+							id
+							status
+							totalValue
+							updatedAt
+							expiresAt
+							withdrawerSteamTradeUrl
+							__typename
+						}
+						__typename
+					}
+				}
+			`,
+		}),
+	});
+
+	const data = await response.json();
+	return data;
+};
+
+
 // This function uses csgoroll endpoint to recieve steam inventory data
 const getCurrentSteamInvData = async () => {
 	let afterID = '';

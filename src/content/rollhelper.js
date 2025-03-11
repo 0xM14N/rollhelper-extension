@@ -1,5 +1,5 @@
 console.log(
-	`%c[ROLLHELPER] [v1.1.1]`,
+	`%c[ROLLHELPER] [v1.1.3]`,
 	'color:#eb0909;font-weight: bold; font-size:23px',
 );
 
@@ -116,7 +116,7 @@ function connectWSS() {
 		connected = true;
 	};
 
-	socket.onmessage = event => {
+	socket.onmessage = async (event) => {
 		let data = JSON.parse(event.data);
 		if (data?.type === 'connection_ack') {
 			console.log(
@@ -145,7 +145,8 @@ function connectWSS() {
 					let addedStickersValue = 0;
 					let maxMarkup = 12;
 					let coinsToUsd;
-					acceptTrade(trade.id);
+					//acceptTrade(trade.id); ~ wss accept not working, using requests instead
+					let data = await fetchAcceptTrade(trade.id);
 
 					if (stickersArr.length > 0) {
 						for (const sticker of stickersArr) {
