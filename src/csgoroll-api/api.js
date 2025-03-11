@@ -3,7 +3,7 @@ invFailFetchCount = 0;
 
 // New request to accept trade
 const fetchAcceptTrade = async (tradeid) => {
-	const response = await fetch('https://api.csgoroll.com/graphql', {
+	const response = await fetch(domainUrl, {
 		method: 'POST',
 		headers: {
 			Accept: 'application/json, text/plain, */*',
