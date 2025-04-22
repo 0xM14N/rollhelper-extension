@@ -79,5 +79,6 @@ in order to work properly (_turn on "**Send offers based on query params"**,
 
 ### Issues
 
-Iam aware that the extension has a lot of bugs / issues, so feel free to open
-github issue if you find any
+Feel free to contact me regarding issues / bugs with extension (or any other inquires) on github issues or at discord: maintrades
+
+###### _By installing this extension, you agree to apply my promo code RLHLPR on CSGOROLL_ (thanks for support!)

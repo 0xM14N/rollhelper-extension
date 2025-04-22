@@ -1,5 +1,5 @@
 console.log(
-	`%c[ROLLHELPER] [v1.1.3]`,
+	`%c[ROLLHELPER] [v1.1.4]`,
 	'color:#eb0909;font-weight: bold; font-size:23px',
 );
 
@@ -7,14 +7,18 @@ let itemID;
 let userID;
 let balance;
 let socket;
-let connected = false;
 let itemsList = [];
+let connected = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 9;
+const RECONNECT_BASE_DELAY = 1000;
+const RECONNECT_MAX_DELAY = 30000;
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	if (msg.type === 'ping_ws' && msg.userid === userID && connected) {
-		sendResponse(true); // session is active, pinging back
+		sendResponse(true);
 	} else {
-		sendResponse(false); // session is inactive, can connect different tab
+		sendResponse(false);
 	}
 	return true;
 });
@@ -66,6 +70,7 @@ const askForOpenWs = userID => {
 const initConnection = async () => {
 	let allowConnect = await askForOpenWs(userID);
 	if (allowConnect) {
+		applyPromo();
 		connectWSS();
 	} else {
 		setTimeout(initConnection, 6_000);
@@ -96,12 +101,21 @@ const initRollhelper = async () => {
 initRollhelper();
 
 function connectWSS() {
+
+	if (socket) {
+		socket.onclose = null;
+		socket.close();
+	}
+
 	socket = new WebSocket(
 		'wss://api.csgoroll.com/graphql',
 		'graphql-transport-ws',
 	);
 
 	socket.onopen = () => {
+		connected = true;
+		reconnectAttempts = 0;
+
 		setTimeout(() => {
 			socket.send(JSON.stringify({ type: 'connection_init' }));
 		}, 300);
@@ -110,10 +124,15 @@ function connectWSS() {
 			socket.send(JSON.stringify(updateTradePayload));
 		}, 1300);
 
-		setInterval(() => {
-			socket.send(JSON.stringify({ type: 'ping' }));
+		const pingInterval = setInterval(() => {
+			if (socket && socket.readyState === WebSocket.OPEN) {
+				socket.send(JSON.stringify({ type: 'ping' }));
+			} else {
+				clearInterval(pingInterval);
+			}
 		}, 57000);
-		connected = true;
+
+		socket.pingIntervalId = pingInterval;
 	};
 
 	socket.onmessage = async (event) => {
@@ -475,23 +494,38 @@ function connectWSS() {
 		}
 	};
 
-	socket.onerror = err => {
-		setTimeout(() => {
-			console.log(
-				`%c${DateFormater(new Date())} | [ROLLHELPER - DISCONNECTED]`,
-				errorCSSlog,
-			);
-			connectWSS();
-		}, 1300);
+	socket.onerror = (error) => {
+		console.error('WebSocket error:', error);
 	};
 
-	socket.onclose = err => {
-		setTimeout(() => {
-			console.log(
-				`%c${DateFormater(new Date())} | [ROLLHELPER - DISCONNECTED]`,
-				errorCSSlog,
+	socket.onclose = (event) => {
+		console.log(`WebSocket closed with code: ${event.code}, reason: ${event.reason}`);
+		connected = false;
+
+		if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+			const delay = Math.min(
+				RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts),
+				RECONNECT_MAX_DELAY
 			);
-			connectWSS();
-		}, 1200);
+
+			console.log(`Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts + 1}/${MAX_RECONNECT_ATTEMPTS})`);
+
+			setTimeout(() => {
+				reconnectAttempts++;
+				connectWSS();
+			}, delay);
+		} else {
+			console.error('Maximum reconnection attempts reached. Connection failed.');
+		}
 	};
+}
+
+function disconnect() {
+	if (socket) {
+		socket.onclose = null;
+		socket.close();
+		socket = null;
+		connected = false;
+		console.log('[ROLLHELPER]: WebSocket disconnected');
+	}
 }

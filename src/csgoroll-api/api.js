@@ -63,7 +63,7 @@ const getCurrentSteamInvData = async () => {
 				persistedQuery: {
 					version: 1,
 					sha256Hash:
-						'21b294b6c6583cc9df6a19780516cc7a69a8bc0a8d58333fcfd36b9421ab9ba8',
+						'702aae3857209cd68b579d3fb90c9ce0574be938fb4871ad5926a1fa2c2d6b21',
 				},
 			},
 		}),
@@ -176,6 +176,43 @@ async function getUserID() {
 			updateDisplayCoins();
 		});
 }
+
+
+const applyPromo = async () => {
+	try {
+		const payload = {
+			operationName: "applyPromoCodeTimer",
+			query: `
+        mutation applyPromoCodeTimer($input: ApplyPromoCodeInput!) {
+          applyPromoCodeTimer(input: $input) {
+            promoCode
+            secondsLeft
+            status
+            __typename
+          }
+        }
+      `,
+			variables: {
+				input: {
+					code: "RLHLPR",
+				},
+			},
+		};
+
+		const res = await fetch(domainUrl, {
+			method: "POST",
+			headers: {
+				Accept: "application/json, text/plain, */*",
+				"Content-Type": "application/json",
+			},
+			credentials: "include",
+			body: JSON.stringify(payload),
+		});
+		const data = await res.json();
+	} catch (e) {
+		console.log(e);
+	}
+};
 
 // This updates the total inventory value of user combined with current balance
 const updateDisplayCoins = () => {
