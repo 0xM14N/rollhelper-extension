@@ -1,5 +1,9 @@
 # ROLLHELPER
 
+**OFFER SENDING FIX:**
+In order to fix the offer sending issue that currently occures with rollhelper, you need to download latest update + visit [chrome://settings/content/popups](chrome://settings/content/popups) and enable pop-ups.
+(Looks like chrome forced this option in recent update to be turned off by default)
+
 **RollHELPER** is chrome extension dedicated for the **csgoroll trading
 community**. It offers various functions which aim to help with trading on
 csgoroll.
