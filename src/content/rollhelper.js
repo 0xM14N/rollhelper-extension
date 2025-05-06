@@ -77,6 +77,9 @@ const initConnection = async () => {
 	}
 };
 
+
+
+
 const initRollhelper = async () => {
 	itemInfo = {};
 	prices = {};
@@ -89,7 +92,7 @@ const initRollhelper = async () => {
 
 		await getUserID();
 		rates = await fetchRates();
-		await getCurrentSteamInvData();
+		await getCurrentSteamInvData(userID);
 		await updateSettings();
 		prices = await loadPriceDataPricempire();
 		await initConnection();

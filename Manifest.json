@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER",
 	"description": "Helping the traders on csgoroll",
-	"version": "1.1.3",
+	"version": "1.1.4",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -51,12 +51,12 @@
 			"16": "assets/ico/coin-ico.png"
 		}
 	},
-	"permissions": ["storage", "tabs"],
+	"permissions": ["storage", "tabs", "cookies"],
 	"host_permissions": [
+		"https://*.csgoroll.com/*",
 		"https://www.csgoroll.com/*",
 		"https://www.csgorolltr.com/*",
-		"https://www.csgoroll.gg/*",
-		"https://prices.csgotrader.app/latest/prices_v6.json"
+		"https://www.csgoroll.gg/*"
 	],
 	"web_accessible_resources": [
 		{
