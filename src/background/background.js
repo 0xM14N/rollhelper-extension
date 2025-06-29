@@ -203,7 +203,7 @@ fragment Wallet on Wallet {
 						extensions: {
 							persistedQuery: {
 								version: 1,
-								sha256Hash: '702aae3857209cd68b579d3fb90c9ce0574be938fb4871ad5926a1fa2c2d6b21',
+								sha256Hash: 'd40100df6c65c59cf071804e05a58879dad39d050cfeed809c249b680d87c249',
 							},
 						},
 					}),
