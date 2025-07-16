@@ -87,7 +87,6 @@ fragment User on User {
   avatar
   steamId
   mutedUntil
-  roles
   userProgress {
     id
     xp
