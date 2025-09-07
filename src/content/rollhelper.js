@@ -1,5 +1,5 @@
 console.log(
-	`%c[ROLLHELPER] [v1.1.4]`,
+	`%c[ROLLHELPER] [v1.1.5]`,
 	'color:#eb0909;font-weight: bold; font-size:23px',
 );
 
@@ -76,8 +76,6 @@ const initConnection = async () => {
 		setTimeout(initConnection, 6_000);
 	}
 };
-
-
 
 
 const initRollhelper = async () => {
