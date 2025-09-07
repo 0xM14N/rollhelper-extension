@@ -422,7 +422,8 @@ function connectWSS() {
 				// WITHDRAW-ACCEPTED EVENT
 				if (trade.depositor.id != userID) {
 					let marketName = trade.tradeItems[0].marketName;
-					let markup = trade.tradeItems[0].markupPercent;
+					let markup =
+						trade.tradeItems[0].markupPercent;
 					let value = trade.tradeItems[0].value;
 					let float = trade.avgPaintWear;
 					let icon_url = trade.tradeItems[0].itemVariant.iconUrl;

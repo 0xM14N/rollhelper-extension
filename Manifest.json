@@ -56,7 +56,9 @@
 		"https://*.csgoroll.com/*",
 		"https://www.csgoroll.com/*",
 		"https://www.csgorolltr.com/*",
-		"https://www.csgoroll.gg/*"
+		"https://www.csgoroll.gg/*",
+		"https://prices.csgotrader.app/*",
+		"https://api.pricempire.com/*"
 	],
 	"web_accessible_resources": [
 		{

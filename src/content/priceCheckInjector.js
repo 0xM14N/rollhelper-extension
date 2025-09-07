@@ -50,6 +50,7 @@ function drawRealMarkup(calcRes, calc) {
 	return divInner;
 }
 
+
 function setBuffValue(item) {
 	var itemInfo = {};
 	let itemName = '';
@@ -155,123 +156,192 @@ function setBuffValue(item) {
 	}
 
 	// SKIN EXTERIOR   ===============================================================
+	let extEl;
 	let exterior;
-
-	// depo page float value selector:
-	let ext = item.querySelector(
-		'div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > span:nth-child(2)',
-	);
-	if (ext) {
+	extEl = item.querySelector("cw-item-float-wear-info > span") // deposit page selector
+	if (extEl){
 		// we are on depo page
+		exterior = extEl.innerText.trim().split(" ")[0]
+		// sticker wear
 		if (isSticker) {
-			ext = ext.innerHTML.trim();
-			itemInfo.skinExterior = ' (' + ext + ')';
-			let nameArr = itemName.split(' ');
-
-			if (itemName.split('|').length === 2) {
-				// sticker with only one | char
-				itemName = itemName + itemInfo.skinExterior;
-			} else {
-				let f = 0;
-				for (let i = 0; i < nameArr.length; i++) {
-					if (nameArr[i] === '|') {
-						f++;
-						if (f === 2) {
-							nameArr[i - 1] += itemInfo.skinExterior;
-							break;
-						}
-					}
-				}
-				itemName = nameArr.join(' ');
-			}
-		} else {
-			let ext = item
-				.querySelector(
-					'div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > span:nth-child(2)',
-				)
-				.innerHTML.split(' ')[0];
-
-			if (ext === 'FN') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Factory New)';
-			}
-			if (ext === 'MW') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Minimal Wear)';
-			}
-			if (ext === 'FT') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Field-Tested)';
-			}
-			if (ext === 'WW') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Well-Worn)';
-			}
-			if (ext === 'BS') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Battle-Scarred)';
-			}
-			if (ext === '\x3C!---->-') {
-				itemInfo.skinExterior = '';
-				itemName += '';
-			}
+			exterior = item.querySelector('div > div > div > span:nth-child(2)').innerText
 		}
-	} else {
-		//p2p page float value selector:
+
+		// ...
+	}else {
+		// we are probably on p2p page
+		extEl = item.querySelector("cw-item-details > div:nth-child(2) > div:nth-child(1) > span") // p2p selector
+		if (extEl) {
+			exterior = extEl.innerText.trim().split(" ")[0];
+		}
 		if (isSticker) {
-			let ext = item
-				.querySelector('div > div > div > span:nth-of-type(2)')
-				.innerHTML.trim();
-			if (ext != 'Sticker') {
-				itemInfo.skinExterior = ' (' + ext + ')';
+			exterior = item.querySelector('div > div > div > span:nth-child(2)').innerText // holo glitter etc..
+			if (exterior != "Sticker") {
 				let nameArr = itemName.split(' ');
 				let f = 0;
 				for (let i = 0; i < nameArr.length; i++) {
 					if (nameArr[i] === '|') {
 						f++;
 						if (f === 2) {
-							nameArr[i - 1] += itemInfo.skinExterior;
+							exterior = exterior.toLowerCase().charAt(0).toUpperCase() + exterior.slice(1).toLowerCase();
+							nameArr[i - 1] += ` (${exterior})`;
 							break;
 						}
 					}
 				}
 				itemName = nameArr.join(' ');
 			}
-		} else {
-     		let extElement = item.querySelector(
-			'cw-item-float-indicator > div:nth-of-type(2) > span:nth-of-type(1)',
-			);
-			let ext = extElement ? extElement.textContent.trim().substring(0, 2) : '';
-
-            // vanilla knives etc..
-            if (itemInfo.skinName == undefined) ext = '\x3C!---->-';
-
-			if (ext === 'FN') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Factory New)';
-			}
-			if (ext === 'MW') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Minimal Wear)';
-			}
-			if (ext === 'FT') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Field-Tested)';
-			}
-			if (ext === 'WW') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Well-Worn)';
-			}
-			if (ext === 'BS') {
-				itemInfo.skinExterior = exterior;
-				itemName += ' (Battle-Scarred)';
-			}
-			if (ext === '\x3C!---->-') {
-				itemInfo.skinExterior = '';
-				itemName += '';
-			}
+			// console.log(`STICKER`)
+			// console.log(itemName)
 		}
 	}
+
+	switch (exterior) {
+		case "FN":
+			itemName += ' (Factory New)';
+			break;
+		case "MW":
+			itemName += ' (Minimal Wear)';
+			break;
+		case "FT":
+			itemName += ' (Field-Tested)';
+			break;
+		case "WW":
+			itemName += ' (Well-Worn)';
+			break;
+		case "BS":
+			itemName += ' (Battle-Scarred)';
+			break;
+	}
+	// console.log(itemName)
+
+
+
+
+
+	// p2p page     cw-csgo-market-item-card
+
+
+
+
+	// let exterior;
+	//
+	// // depo page float value selector:
+	// let extEl = item.querySelector("cw-item-float-wear-info > span");
+	// let ext = extEl.textContent.trim().split(" ")[0];
+	//
+	// if (ext) {
+	// 	// we are on depo page
+	// 	if (isSticker) {
+	// 		ext = ext.innerHTML.trim();
+	// 		itemInfo.skinExterior = ' (' + ext + ')';
+	// 		let nameArr = itemName.split(' ');
+	//
+	// 		if (itemName.split('|').length === 2) {
+	// 			// sticker with only one | char
+	// 			itemName = itemName + itemInfo.skinExterior;
+	// 		} else {
+	// 			let f = 0;
+	// 			for (let i = 0; i < nameArr.length; i++) {
+	// 				if (nameArr[i] === '|') {
+	// 					f++;
+	// 					if (f === 2) {
+	// 						nameArr[i - 1] += itemInfo.skinExterior;
+	// 						break;
+	// 					}
+	// 				}
+	// 			}
+	// 			itemName = nameArr.join(' ');
+	// 		}
+	// 	} else {
+	// 		// let ext = item.querySelector('div.footer > span:nth-child(4) > ' +
+	// 		// 	'div:nth-child(1) > cw-item-float-wear-info:nth-child(1) > span:nth-child(1)')
+	// 		// 	.textContent.trim().split(" ")[0];
+	// 		// let ext = extEl.textContent.trim().split(" ")[0];
+	// 		let ext = extEl.textContent.trim().split(" ")[0];
+	//
+	// 		if (ext === 'FN') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Factory New)';
+	// 		}
+	// 		if (ext === 'MW') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Minimal Wear)';
+	// 		}
+	// 		if (ext === 'FT') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Field-Tested)';
+	// 		}
+	// 		if (ext === 'WW') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Well-Worn)';
+	// 		}
+	// 		if (ext === 'BS') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Battle-Scarred)';
+	// 		}
+	// 		if (ext === '\x3C!---->-') {
+	// 			itemInfo.skinExterior = '';
+	// 			itemName += '';
+	// 		}
+	// 	}
+	// } else {
+	// 	//p2p page float value selector:
+	// 	if (isSticker) {
+	// 		let ext = item
+	// 			.querySelector('div > div > div > span:nth-of-type(2)')
+	// 			.innerHTML.trim();
+	// 		if (ext != 'Sticker') {
+	// 			itemInfo.skinExterior = ' (' + ext + ')';
+	// 			let nameArr = itemName.split(' ');
+	// 			let f = 0;
+	// 			for (let i = 0; i < nameArr.length; i++) {
+	// 				if (nameArr[i] === '|') {
+	// 					f++;
+	// 					if (f === 2) {
+	// 						nameArr[i - 1] += itemInfo.skinExterior;
+	// 						break;
+	// 					}
+	// 				}
+	// 			}
+	// 			itemName = nameArr.join(' ');
+	// 		}
+	// 	} else {
+    //  		let extElement = item.querySelector(
+	// 		'cw-item-float-wear-info ',
+	// 		);
+	// 		let ext = extElement ?  item.querySelector('cw-item-float-wear-info')
+	// 			.textContent.trim().split(" ")[0] : "";
+	//
+    //         // vanilla knives etc..
+    //         if (itemInfo.skinName == undefined) ext = '\x3C!---->-';
+	//
+	// 		if (ext === 'FN') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Factory New)';
+	// 		}
+	// 		if (ext === 'MW') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Minimal Wear)';
+	// 		}
+	// 		if (ext === 'FT') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Field-Tested)';
+	// 		}
+	// 		if (ext === 'WW') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Well-Worn)';
+	// 		}
+	// 		if (ext === 'BS') {
+	// 			itemInfo.skinExterior = exterior;
+	// 			itemName += ' (Battle-Scarred)';
+	// 		}
+	// 		if (ext === '\x3C!---->-') {
+	// 			itemInfo.skinExterior = '';
+	// 			itemName += '';
+	// 		}
+	// 	}
+	// }
 
 	let rollPrice;
 	if (!isStickered) {
@@ -288,10 +358,7 @@ function setBuffValue(item) {
 		rollPrice =
 			Math.floor(
 				item
-					.querySelector(
-						'div:nth-child(1) > div:nth-child(1) > ' +
-							'div:nth-child(7) > cw-pretty-balance > span',
-					)
+					.querySelector(`cw-pretty-balance > span`)
 					.innerText.replace(',', '') * 100,
 			) / 100;
 	}
@@ -312,6 +379,7 @@ function setBuffValue(item) {
 		}
 	}
 
+
 	switch (provider) {
 		case 'pricempire':
 			if (phase !== undefined) itemName = itemName + ' - ' + phase;
@@ -321,16 +389,41 @@ function setBuffValue(item) {
 				return;
 			}
 			if (price_obj?.buff?.price) {
-				buff_usd = price_obj.buff.price / 100;
+				buff_usd = price_obj.buff.price / 100; // usd cents
 				liquidity = price_obj.liquidity;
 				isInflated = price_obj.buff.isInflated;
 			}
 			break;
-	}
 
+		case 'csgotrader':
+			price_obj = prices[itemName];
+
+			if (price_obj === undefined) {
+				console.log(`[PRICECHECK ERROR]: ${itemName}`);
+				return;
+			}
+
+			if (price_obj?.starting_at?.price) {
+
+				if (phase != undefined) {
+
+					buff_usd = price_obj?.starting_at?.doppler?.[phase];
+					liquidity = 0;
+					isInflated = false;
+				}else {
+					buff_usd = price_obj.starting_at.price; // usd
+					liquidity = 0;
+					isInflated = false;
+				}
+			}
+			break;
+
+	}
 	let tbuffVal = buff_usd / rate;
 	let buffVal = Math.floor(tbuffVal * 100) / 100;
 	let calc = ((rollPrice / buffVal) * 100 - 100).toFixed(1);
+
+	// console.log(`${itemName} | USD PRICE: ${buff_usd}$ rollUSD: ${rollPrice*rate}$ calc: ${calc}%`)
 
 	let parent_el = item.querySelector('div > div:nth-child(7)');
 	if (!parent_el) {

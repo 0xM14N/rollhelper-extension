@@ -60,6 +60,7 @@ const isKnife = marketName => {
 const refactorDopplerNameForPE = marketName => {
 	const phaseMatch = /Phase (\d+)/;
 	const gemMatch = /(Ruby|Sapphire|Black Pearl|Emerald)/;
+
 	if (marketName.match(phaseMatch)) {
 		let match = marketName.match(phaseMatch)[0];
 		let refactored = marketName.replace(match + ' ', '') + ` - ${match}`;
@@ -174,8 +175,30 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 				}
 			}
 			return null;
+
+		case 'csgotrader':
+			if (isDoppler(marketName))
+				marketName = refactorDopplerNameForCSGOTR(marketName);
+
+			price_obj = prices[marketName];
+			if (price_obj) {
+				try {
+					let buff_usd = price_obj.starting_at.price;
+					let coins_usd = rollprice * rate;
+
+					let profit = (
+						100 + parseFloat(((coins_usd - buff_usd) / buff_usd) * 100)
+					).toFixed(2);
+					return [buff_usd, profit, rate];
+				} catch (err) {
+					console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
+				}
+			}
+			return null;
 	}
 };
+
+
 
 // PRICEMPIRE PRICE DATA LOAD
 async function loadPriceDataPricempire() {
@@ -187,6 +210,8 @@ async function loadPriceDataPricempire() {
 					`%c[PRICEMPIRE - ERROR] -> ${response.error}`,
 					pricempireCSSlog,
 				);
+				// load backup csgotrader prices
+				await loadPriceDataCstrader()
 			} else {
 				provider = 'pricempire';
 				prices = response;
@@ -199,3 +224,27 @@ async function loadPriceDataPricempire() {
 		},
 	);
 }
+
+async function loadPriceDataCstrader(){
+	chrome.runtime.sendMessage(
+		{ type: 'csgotrader'},
+		async response => {
+			if (response.error) {
+				console.log(
+					`%c[CSGOTRADAER PRICING - ERROR] -> ${response.error}`,
+					pricempireCSSlog,
+				);
+			} else {
+				provider = 'csgotrader';
+				prices = response;
+				console.log(
+					`%c[CSGOTRADAER] -> Successfully loaded current price data`,
+					pricempireCSSlog,
+				);
+				// console.log(prices)
+				return prices;
+			}
+		},
+	);
+}
+

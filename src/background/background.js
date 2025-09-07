@@ -380,6 +380,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			chrome.tabs.create({ url: tradelinkOffer });
 			return true;
 
+		case 'csgotrader':
+			try {
+				const priceProviderURL = `https://prices.csgotrader.app/latest/buff163.json`;
+
+				fetch(priceProviderURL)
+					.then(res => res.json())
+					.then(data => {
+						sendResponse(data);
+					})
+					.catch(error => {
+						sendResponse({ error: 'Failed to load csgotrader prices' });
+					});
+				return true;
+			} catch (e) {
+				console.error('Unexpected error:', e);
+				sendResponse({ error: 'Unexpected error' });
+			}
+			break;
+
 		case 'pricempire':
 			const apiKey = msg.key;
 
