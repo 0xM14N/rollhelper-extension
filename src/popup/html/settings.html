@@ -1,191 +1,150 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>Settings</title>
-		<link rel="stylesheet" href="../css/style.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
-			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-			crossorigin="anonymous"
+<head>
+	<meta charset="UTF-8" />
+	<title>Settings</title>
+	<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body class="settings-page">
+
+
+<div class="card" style="padding: 5px; margin: 4px;">
+	<div style="text-align: center; margin-bottom: 10px;">
+		<div style="font-size: 16px; font-weight: 700; letter-spacing: 2px;">
+			<span style="color: #ff0000;">NOTIFI</span><span style="color: #ffffff;">CATIONS</span>
+		</div>
+	</div>
+
+	<div class="divider" style="margin: 8px 0;"></div>
+
+	<div class="toggle-section" style="margin-bottom: 10px;">
+		<div class="toggle-wrapper" style="padding: 8px;">
+			<span class="toggle-label-main" style="font-size: 12px;">Pushover</span>
+			<label class="switch" style="width: 42px; height: 24px;">
+				<input type="checkbox" id="notifySwitch" />
+				<span class="slider"></span>
+			</label>
+		</div>
+	</div>
+
+	<div class="toggle-section" style="margin-bottom: 10px;">
+		<div class="toggle-wrapper" style="padding: 8px;">
+			<span class="toggle-label-main" style="font-size: 12px;">Discord</span>
+			<label class="switch" style="width: 42px; height: 24px;">
+				<input type="checkbox" id="dcNotifySwitch" />
+				<span class="slider"></span>
+			</label>
+		</div>
+	</div>
+
+	<div class="divider" style="margin: 8px 0;"></div>
+
+	<div style="margin-bottom: 10px;">
+		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+			<div class="toggle-wrapper" style="flex-direction: column; padding: 8px;">
+				<label class="switch">
+					<input type="checkbox" id="depoAlert" />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Deposit</span>
+			</div>
+			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
+				<label class="switch">
+					<input type="checkbox" id="withdrawAlert" />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Withdrawal</span>
+			</div>
+			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
+				<label class="switch" >
+					<input type="checkbox" id="completedAlert" />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Completed</span>
+			</div>
+			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
+				<label class="switch" >
+					<input type="checkbox" id="cooldownAlert" />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Cooldown</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="divider" style="margin: 8px 0;"></div>
+
+
+	<div class="input-section" style="margin-bottom: 10px;">
+		<label class="input-label" style="font-size: 10px; margin-bottom: 4px;">Discord Webhook</label>
+		<input
+				type="text"
+				placeholder="Discord Webhook URL"
+				class="modern-input"
+				id="discordInput"
+				style="padding: 8px 10px; font-size: 12px;"
 		/>
-	</head>
-	<body>
-		<div class="d-flex justify-content-center">
-			<a href="https://github.com/0xM14N/rollhelper-extension" target="_blank">
+	</div>
+
+	<div class="input-section" style="margin-bottom: 10px;">
+		<label class="input-label" style="font-size: 10px; margin-bottom: 4px;">Pushover User Key</label>
+		<input
+				type="text"
+				placeholder="Pushover User Key"
+				class="modern-input"
+				id="userkeyInput"
+				style="padding: 8px 10px; font-size: 12px;"
+		/>
+	</div>
+
+	<div class="input-section" style="margin-bottom: 10px;">
+		<label class="input-label" style="font-size: 10px; margin-bottom: 4px;">Pushover Token</label>
+		<input
+				type="text"
+				placeholder="Pushover Token"
+				class="modern-input"
+				id="tokenInput"
+				style="padding: 8px 10px; font-size: 12px;"
+		/>
+	</div>
+
+	<div class="input-section" style="margin-bottom: 10px;">
+		<label class="input-label" style="font-size: 10px; margin-bottom: 4px;">Pricempire API Key</label>
+		<div style="display: flex; align-items: center; gap: 6px;">
+			<input
+					type="text"
+					placeholder="PE-API"
+					class="modern-input"
+					id="peApiKey"
+					style="flex: 1; padding: 8px 10px; font-size: 12px;"
+			/>
+			<a href="https://old.pricempire.com/r/rollhelper" target="_blank">
 				<img
-					src="../../../assets/ico/rollHelper.png"
-					alt="helper-logo"
-					width="95"
-					height="35"
+						src="../../../assets/ico/pelogo.png"
+						alt="Get API Key"
+						height="26"
+						width="26"
+						style="transition: transform 0.2s ease; cursor: pointer;"
+						onmouseover="this.style.transform='scale(1.1)'"
+						onmouseout="this.style.transform='scale(1)'"
 				/>
 			</a>
 		</div>
-		<div class="container">
-			<div class="row">
-				<div class="col-12 pb-2">
-					<div class="settings-text">
-						<span style="color: #ff0000">SETT</span>INGS
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="container d-flex justify-content-center">
-			<hr />
-		</div>
-		<div class="notif-box">
-			<div class="container">
-				<div class="row">
-					<div class="col d-flex justify-content-center">
-						<label class="switch">
-							<input type="checkbox" id="notifySwitch" />
-							<span class="slider round"></span>
-						</label>
-					</div>
-					<div class="col-12">
-						<div class="setting-desc">PUSHOVER</div>
-					</div>
-					<div class="container pt-1">
-						<div class="row">
-							<div class="col d-flex justify-content-center">
-								<label class="switch">
-									<input type="checkbox" id="dcNotifySwitch" />
-									<span class="slider round"></span>
-								</label>
-							</div>
-							<div class="col-12">
-								<div class="setting-desc">DISCORD</div>
-							</div>
-						</div>
-					</div>
-					<div class="container mt-1 alert-set-box">
-						<div class="row">
-							<div class="col-6 d-flex justify-content-center">
-								<label class="switch-sm">
-									<input type="checkbox" id="depoAlert" />
-									<span class="slider-sm round"></span>
-								</label>
-							</div>
-							<div class="col-6 d-flex justify-content-center">
-								<label class="switch-sm">
-									<input type="checkbox" id="withdrawAlert" />
-									<span class="slider-sm round"></span>
-								</label>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-6 d-flex justify-content-center desc-text-sm">
-								Deposit
-							</div>
-							<div class="col-6 d-flex justify-content-center desc-text-sm">
-								Withdrawal
-							</div>
-						</div>
-						<div class="row mt-2">
-							<div class="col-6 d-flex justify-content-center">
-								<label class="switch-sm">
-									<input type="checkbox" id="completedAlert" />
-									<span class="slider-sm round"></span>
-								</label>
-							</div>
-							<div class="col-6 d-flex justify-content-center">
-								<label class="switch-sm">
-									<input type="checkbox" id="cooldownAlert" />
-									<span class="slider-sm round"></span>
-								</label>
-							</div>
-						</div>
-						<div class="row">
-							<div class="col-6 d-flex justify-content-center desc-text-sm">
-								Completed
-							</div>
-							<div class="col-6 d-flex justify-content-center desc-text-sm">
-								Cooldown
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="container mt-1">
-				<div class="row discordInput">
-					<div class="col-12 d-flex justify-content-center">
-						<p class="desc-key-sm">Discord WEBHOOK</p>
-					</div>
-					<div class="col d-flex justify-content-center pb-2">
-						<input
-							type="text"
-							placeholder="Discord Webhook"
-							class="hookClass"
-							id="discordInput"
-							title="DISCORD WEBHOOK"
-						/>
-					</div>
-				</div>
-				<div class="pushoverInput mb-2">
-					<div class="col-12 d-flex justify-content-center">
-						<p class="desc-key-sm">Pushover USERKEY</p>
-					</div>
-					<div class="col d-flex justify-content-center pb-2">
-						<input
-							type="text"
-							placeholder="Pushover User Key"
-							class="hookClass"
-							id="userkeyInput"
-							title="PUSHOVER USER KEY"
-						/>
-					</div>
-					<div class="row">
-						<div class="col-12 d-flex justify-content-center">
-							<p class="desc-key-sm">Pushover TOKEN</p>
-						</div>
-						<div class="col d-flex justify-content-center">
-							<input
-								type="text"
-								placeholder="Pushover Token"
-								class="hookClass"
-								id="tokenInput"
-								title="PUSHOVER API TOKEN"
-							/>
-						</div>
-					</div>
-				</div>
-				<div class="col-12 d-flex justify-content-center">
-					<p class="desc-key-sm">Pricempire APIKEY</p>
-				</div>
-				<div class="col-12 d-flex justify-content-center mb-2">
-					<input
-						type="text"
-						placeholder="PE-API"
-						class="rollID"
-						id="peApiKey"
-						title="PRICEMPIRE API KEY"
-					/>
-					<a href="https://old.pricempire.com/r/rollhelper" target="_blank">
-						<img
-							src="../../../assets/ico/pelogo.png"
-							alt=""
-							height="30px"
-							width="30px"
-							title="Get your APIKEY here"
-							class="ml-1"
-						/>
-					</a>
-				</div>
-			</div>
-		</div>
-		<div class="container p-1">
-			<div class="row">
-				<div class="col-6 justify-content-center">
-					<a href="popup.html">
-						<button class="roll-button" id="">BACK</button>
-					</a>
-				</div>
-				<div class="col-6 d-flex justify-content-center">
-					<button class="roll-button" id="saveSettings">SAVE</button>
-				</div>
-			</div>
-		</div>
-		<script src="../js/settings.js"></script>
-	</body>
+	</div>
+
+	<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+		<a href="popup.html" style="text-decoration: none;">
+			<button class="modern-button button-secondary" style="padding: 10px 16px; font-size: 12px;">
+				<span>Back</span>
+			</button>
+		</a>
+		<button class="modern-button button-primary" id="saveSettings" style="padding: 10px 16px; font-size: 12px;">
+			<span>Save</span>
+		</button>
+	</div>
+</div>
+
+
+<script src="../js/settings.js"></script>
+</body>
 </html>

@@ -1,102 +1,101 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>RollHELPER</title>
-		<link rel="stylesheet" href="../css/style.css" />
-		<link
-			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
-			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-			crossorigin="anonymous"
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>RollHELPER</title>
+	<link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+<!-- Header -->
+<div class="header-section">
+	<a href="https://csgoroll.com/r/RLHLPR" target="_blank">
+		<img
+				src="../../../assets/ico/rollHelper.png"
+				alt="RollHelper Logo"
+				width="110"
+				height="40"
 		/>
-	</head>
-	<body>
-		<div class="d-flex p-3 justify-content-center">
-			<a href="https://csgoroll.com/r/RLHLPR" target="_blank">
-				<img
-					src="../../../assets/ico/rollHelper.png"
-					alt="helper-logo"
-					width="95"
-					height="35"
-				/>
-			</a>
-		</div>
-		<div class="container">
-			<div class="row p-2">
-				<div class="col-12 d-flex justify-content-center">
-					<label class="switch">
-						<input type="checkbox" id="depoSwitch" />
-						<span class="slider round"></span>
-					</label>
-				</div>
-				<div class="col-12">
-					<div class="setting-desc">AUTOACCEPT</div>
-				</div>
-			</div>
-		</div>
-		<div class="row mt">
-			<div class="col-12 d-flex justify-content-center">
-				<label class="switch-sm">
-					<input type="checkbox" id="sendOfferSwitch" />
-					<span class="slider-sm round"></span>
-				</label>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-12 d-flex justify-content-center desc-text-sm">
-				Send Offers
-			</div>
-		</div>
-		<div class="container d-flex justify-content-center">
-			<hr />
-		</div>
-		<div class="col-12 d-flex justify-content-center">
-			<p class="desc-key-sm">Steam offer message</p>
-		</div>
-		<div class="col-12 d-flex justify-content-center mb-2">
-			<input
-				type="text"
-				placeholder="Steam Offer Message"
-				class="offerMsgInput"
-				id="steamOfferMessageInput"
-				title="Steam Offer Message"
-			/>
-		</div>
-		<div class="container">
-			<div class="row">
-				<div class="col-12 d-flex justify-content-center mb-2 mt-2">
-					<a href="settings.html">
-						<button class="roll-button" id="">SETTINGS</button>
-					</a>
-				</div>
-			</div>
-		</div>
-		<div class="container">
-			<div class="row">
-				<div class="col-12 d-flex justify-content-center pb-3">
-					<button class="roll-button" id="saveSettings">SAVE</button>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12 d-flex justify-content-center">
-					<p class="footer-text m-0 d-flex justify-content-center">
-						Created by
-					</p>
-				</div>
-				<div class="col-12 d-flex justify-content-center mb-1">
-					<a href="https://github.com/0xM14N" target="_blank">
-						<button class="button" data-text="Awesome">
-							<span class="actual-text">&nbsp;MAIN&nbsp;</span>
-							<span aria-hidden="true" class="hover-text"
-								>&nbsp;MAIN&nbsp;</span
-							>
-						</button>
-					</a>
-				</div>
-			</div>
-		</div>
+	</a>
+	<div class="divider" style="margin: 8px 0;"></div>
+</div>
 
-		<script src="../js/popup.js"></script>
-	</body>
+<!-- Main Card -->
+<div class="card">
+	<!-- Auto Accept Toggle -->
+	<div class="toggle-section">
+		<div class="toggle-wrapper">
+			<span class="toggle-label-main">Auto Accept</span>
+			<label class="switch">
+				<input type="checkbox" id="depoSwitch" />
+				<span class="slider"></span>
+			</label>
+		</div>
+	</div>
+
+	<div class="divider"></div>
+
+	<!-- Send Offers Toggle -->
+	<div class="toggle-section">
+		<div class="toggle-wrapper">
+			<span class="toggle-label">Send Offers</span>
+			<label class="switch">
+				<input type="checkbox" id="sendOfferSwitch" />
+				<span class="slider"></span>
+			</label>
+		</div>
+	</div>
+
+	<div class="divider"></div>
+
+	<!-- Steam Offer Message Input -->
+	<div class="input-section">
+		<label class="input-label" for="steamOfferMessageInput">
+			Steam Offer Message
+		</label>
+		<input
+				type="text"
+				id="steamOfferMessageInput"
+				class="modern-input"
+				placeholder="Enter your message..."
+		/>
+	</div>
+
+	<!-- Action Buttons -->
+	<div class="button-group">
+		<a href="settings.html" style="text-decoration: none;">
+			<button class="modern-button button-secondary">
+				<span>Notifications</span>
+			</button>
+		</a>
+		<button class="modern-button button-primary" id="saveSettings">
+			<span>Save Changes</span>
+		</button>
+	</div>
+</div>
+
+
+<div class="cspdiv">
+	<p class="footer-text-csp" style="font-size: 12px">-=[PRICE-CHECK-TOOL]=-</p>
+	<a href="https://cspricebase.com/" target="_blank" class="csp-glow" style="font-size: 17px">
+		www.CSPRICEBASE.com
+	</a>
+</div>
+
+
+<!-- Footer -->
+<div class="footer">
+	<p class="footer-text">Created by</p>
+	<a href="https://github.com/0xM14N" target="_blank">
+		<button class="button" data-text="Awesome">
+			<span class="actual-text">&nbsp;MAINTRADES&nbsp;</span>
+			<span aria-hidden="true" class="hover-text"
+			>&nbsp;MAINTRADES&nbsp;</span
+			>
+		</button>
+	</a>
+</div>
+
+<script src="../js/popup.js"></script>
+</body>
 </html>

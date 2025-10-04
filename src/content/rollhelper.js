@@ -1,6 +1,11 @@
 console.log(
-	`%c[ROLLHELPER] [v1.1.5]`,
+	`%c[ROLLHELPER] [v1.1.6]`,
 	'color:#eb0909;font-weight: bold; font-size:23px',
+);
+
+console.log(
+	`%cInterested in custom features / upgrades (token updater, always-on store, etc) Contact me at discord: maintrades`,
+	'color:#7CFC00FF;background:black;font-weight:bold;font-size:10px',
 );
 
 let itemID;
@@ -475,11 +480,16 @@ function connectWSS() {
 						.replace(/\)/g, '%29');
 					const buffUrl =
 						'https://api.pricempire.com/v1/redirectBuff/' + encodedItemName;
+					const cspUrl = "https://cspricebase.com/database?marketName=" + encodedItemName;
+
 					console.log(
 						`%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
 						withdrawAcceptedCSSlog,
 					);
-					console.log(buffUrl);
+
+					console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, cspUrl);
+
+
 					itemInfo.tradeInfo = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n[FV: ${float}]\n [STICKERS]:\n${formattedStickersText}`;
 
 					if (withdrawAlert == true) {

@@ -29,6 +29,20 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['webhook']),
 	]);
 
+	// console.log("steamOfferMessage:", steamOfferMessage);
+	// console.log("wantSendOffers:", wantSendOffers);
+	// console.log("wantCompletedAlert:", wantCompletedAlert);
+	// console.log("wantCooldownAlert:", wantCooldownAlert);
+	// console.log("dcNotifyState:", dcNotifyState);
+	// console.log("wantWithdrawalAlert:", wantWithdrawalAlert);
+	// console.log("wantDepoAlert:", wantDepoAlert);
+	// console.log("peApi:", peApi);
+	// console.log("switchDepoState:", switchDepoState);
+	// console.log("switchNotifyState:", switchNotifyState);
+	// console.log("token:", token);
+	// console.log("userkey:", userkey);
+	// console.log("webhook:", webhook);
+
 	offerMessage = steamOfferMessage;
 	sendSteamOffers = wantSendOffers;
 	completedAlert = wantCompletedAlert;
