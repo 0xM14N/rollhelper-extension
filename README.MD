@@ -8,9 +8,6 @@ In order to fix the offer sending issue that currently occures with rollhelper, 
 community**. It offers various functions which aim to help with trading on
 csgoroll.
 
-> **NOTICE**: Since the the support for csgotrader pricing api has been
-> discontinued the extension offers no free in-built pricing option as of right
-> now. (So you might want to support Pricempire :] )
 
 ## Current Features
 
