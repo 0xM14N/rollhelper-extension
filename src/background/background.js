@@ -188,7 +188,7 @@ fragment Wallet on Wallet {
 						'Content-Type': 'application/json',
 						'Cookie': cookieString,
 						'Origin': 'https://www.csgoroll.com',
-						'Referer': 'https://www.csgoroll.com/'
+						'Referer': 'https://www.csgoroll.com/',
 					},
 					credentials: 'include',
 					body: JSON.stringify({
@@ -199,14 +199,49 @@ fragment Wallet on Wallet {
 							userId: userID,
 							after: `${afterID}`,
 						},
-						extensions: {
-							persistedQuery: {
-								version: 1,
-								sha256Hash: 'd40100df6c65c59cf071804e05a58879dad39d050cfeed809c249b680d87c249',
-							},
-						},
+						query: `
+			query steamInventoryItems(
+				$after: String,
+				$first: PaginationAmount,
+				$steamAppName: SteamAppName = CSGO,
+				$userId: ID
+			) {
+				steamInventoryItems(
+					after: $after
+					first: $first
+					steamAppName: $steamAppName
+					userId: $userId
+				) {
+					pageInfo {
+						hasNextPage
+						endCursor
+					}
+					edges {
+						node {
+							tradable
+							steamExternalAssetId
+							steamItemIdentifiers {
+								assetId
+							}
+							steamInspectItem {
+								paintWear
+							}
+							steamStickersDescriptions {
+								name
+							}
+							itemVariant {
+								value
+								externalId
+								itemId
+							}
+						}
+					}
+				}
+			}
+		`,
 					}),
 				})
+
 					.then(res => res.json())
 					.then(res => {
 						let tradeListData = res.data.steamInventoryItems.edges;
@@ -308,10 +343,6 @@ fragment Wallet on Wallet {
 		return true;
 	}
 });
-
-
-
-
 
 
 chrome.runtime.onInstalled.addListener(details => {

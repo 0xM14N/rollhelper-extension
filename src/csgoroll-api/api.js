@@ -5,6 +5,7 @@ const fetchAcceptTrade = async (tradeid) => {
 
 const getCurrentSteamInvData = async (userID) => {
 	chrome.runtime.sendMessage({action: "getCurrentSteamInvData", domain: domainUrl, userID: userID}, response => {
+		// console.log(response)
 		itemsList = response;
 	});
 };
