@@ -114,7 +114,7 @@ function connectWSS() {
 	}
 
 	socket = new WebSocket(
-		'wss://api-trader.csgoroll.com/graphql',
+		'wss://router.csgoroll.com/ws',
 		'graphql-transport-ws',
 	);
 
