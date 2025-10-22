@@ -113,13 +113,13 @@ function uuidv4() {
 
 const createApiUrl = tabUrl => {
 	if (tabUrl.includes('csgorolltr.com')) {
-		return 'https://api.csgorolltr.com/graphql';
+		return 'https://api-trader.csgorolltr.com/graphql';
 	}
 	if (tabUrl.includes('csgoroll.com')) {
-		return 'https://api.csgoroll.com/graphql';
+		return 'https://api-trader.csgoroll.com/graphql';
 	}
 	if (tabUrl.includes('csgoroll.gg')) {
-		return 'https://api.csgoroll.gg/graphql';
+		return 'https://api-trader.csgoroll.gg/graphql';
 	}
 };
 
