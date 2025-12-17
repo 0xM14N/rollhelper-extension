@@ -7,7 +7,7 @@ let pushoverRow = document.getElementsByClassName('pushoverInput')[0];
 let switchNotify = document.getElementById('notifySwitch');
 let dcNotify = document.getElementById('dcNotifySwitch');
 let notifBox = document.getElementsByClassName('notif-box')[0];
-let peApiInput = document.getElementById('peApiKey');
+// let peApiInput = document.getElementById('peApiKey');
 let alertBox = document.getElementsByClassName('alert-set-box')[0];
 let depoAlertSwitch = document.getElementById('depoAlert');
 let withdrawalSwitch = document.getElementById('withdrawAlert');
@@ -25,14 +25,14 @@ saveBtn.addEventListener('click', async function () {
 	let userkeyValue = inputUsrkey.value;
 	let tokenValue = inputToken.value;
 	let webhookValue = dcWebhook.value;
-	let peAPIvalue = peApiInput.value;
+	// let peAPIvalue = peApiInput.value;
 
-	if (peAPIvalue != '') {
-		chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-			let activeTab = tabs[0];
-			chrome.tabs.sendMessage(activeTab.id, { peApi: peAPIvalue });
-		});
-	}
+	// if (peAPIvalue != '') {
+	// 	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+	// 		let activeTab = tabs[0];
+	// 		chrome.tabs.sendMessage(activeTab.id, { peApi: peAPIvalue });
+	// 	});
+	// }
 
 	if (tokenValue != '') {
 		promiseStore.push(chrome.storage.sync.set({ token: tokenValue }));
@@ -198,14 +198,14 @@ function restoreOptions() {
 		}
 	});
 
-	chrome.storage.sync.get(['peApi']).then(res => {
-		if (!res.peApi) {
-			peApiInput.placeholder = 'PE-API';
-		}
-		if (res.peApi) {
-			peApiInput.placeholder = '*******';
-		}
-	});
+	// chrome.storage.sync.get(['peApi']).then(res => {
+	// 	if (!res.peApi) {
+	// 		peApiInput.placeholder = 'PE-API';
+	// 	}
+	// 	if (res.peApi) {
+	// 		peApiInput.placeholder = '*******';
+	// 	}
+	// });
 
 	chrome.storage.sync.get(['webhook']).then(res => {
 		if (!res.webhook) {

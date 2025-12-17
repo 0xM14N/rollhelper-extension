@@ -194,7 +194,6 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 
 
 
-// PRICEMPIRE PRICE DATA LOAD
 async function loadPriceDataPricempire() {
 	chrome.runtime.sendMessage(
 		{ type: 'pricempire', key: peApiKey },
