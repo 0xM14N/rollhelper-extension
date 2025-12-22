@@ -123,7 +123,9 @@ function enqueueMessage(message) {
 
 function sp() {
     try {
-        enqueueMessage(JSON.stringify({ type: "ping" }));
+         if (socket.readyState == WebSocket.OPEN){
+            socket.send(JSON.stringify({ type: "ping" }))
+        }
     } catch (e) {
         console.log(e);
     }
