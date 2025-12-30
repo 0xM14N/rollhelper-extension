@@ -7,12 +7,13 @@ const updateSettings = async () => {
 		{ dcNotifyState },
 		{ wantWithdrawalAlert },
 		{ wantDepoAlert },
-		{ peApi },
+		{ cspApi },
 		{ switchDepoState },
 		{ switchNotifyState },
 		{ token },
 		{ userkey },
 		{ webhook },
+		{ enablePricingOverlay }
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -21,27 +22,14 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['dcNotifyState']),
 		chrome.storage.sync.get(['wantWithdrawalAlert']),
 		chrome.storage.sync.get(['wantDepoAlert']),
-		chrome.storage.sync.get(['peApi']),
+		chrome.storage.sync.get(['cspApi']),
 		chrome.storage.sync.get(['switchDepoState']),
 		chrome.storage.sync.get(['switchNotifyState']),
 		chrome.storage.sync.get(['token']),
 		chrome.storage.sync.get(['userkey']),
 		chrome.storage.sync.get(['webhook']),
+		chrome.storage.sync.get(['enablePricingOverlay']),
 	]);
-
-	// console.log("steamOfferMessage:", steamOfferMessage);
-	// console.log("wantSendOffers:", wantSendOffers);
-	// console.log("wantCompletedAlert:", wantCompletedAlert);
-	// console.log("wantCooldownAlert:", wantCooldownAlert);
-	// console.log("dcNotifyState:", dcNotifyState);
-	// console.log("wantWithdrawalAlert:", wantWithdrawalAlert);
-	// console.log("wantDepoAlert:", wantDepoAlert);
-	// console.log("peApi:", peApi);
-	// console.log("switchDepoState:", switchDepoState);
-	// console.log("switchNotifyState:", switchNotifyState);
-	// console.log("token:", token);
-	// console.log("userkey:", userkey);
-	// console.log("webhook:", webhook);
 
 	offerMessage = steamOfferMessage;
 	sendSteamOffers = wantSendOffers;
@@ -50,12 +38,13 @@ const updateSettings = async () => {
 	discord = dcNotifyState;
 	withdrawAlert = wantWithdrawalAlert;
 	depoAlert = wantDepoAlert;
-	peApiKey = peApi;
+	cspApiKey = cspApi;
 	depoAutoAccept = switchDepoState;
 	Pushover = switchNotifyState;
 	Token = token;
 	Userkey = userkey;
 	Webhook = webhook;
+	enablePricing = enablePricingOverlay;
 
 	// Console logs for each variable
 	// console.log('steamOfferMessage:', steamOfferMessage);
@@ -104,24 +93,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		});
 	}
 
-	if (msg.peApi) {
-		if (msg.peApi.length != 36) {
-			alert(`Please enter valid pricempire API KEY`);
-			console.log(
-				`%c[ROLLHELOPER] -> Please enter valid pricempire API KEY`,
-				errorCSSlog,
-			);
-			chrome.storage.sync.set({ peApi: null }).then(() => {
-				updateSettings();
-			});
-		} else {
-			chrome.storage.sync.set({ peApi: msg.peApi }).then(() => {
-				peApiKey = msg.peApi;
-				loadPriceDataPricempire();
-				updateSettings();
-			});
-		}
+	if (msg.cspApi) {
+		chrome.storage.sync.set({ cspApi: msg.cspApi }).then(() => {
+			cspApiKey = msg.cspApi;
+			loadCSP();
+			updateSettings();
+		});
 	}
+
 
 	if (msg.update) {
 		updateSettings();

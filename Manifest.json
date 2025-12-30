@@ -1,7 +1,7 @@
 {
-	"name": "ROLLHELPER - FREE",
-	"description": "Helping the traders on csgoroll",
-	"version": "1.1.9",
+	"name": "ROLLHELPER - TRADING EXTENSION",
+	"description": "Automation extension for traders on CSGOROLL",
+	"version": "1.2",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -40,7 +40,7 @@
 				"https://www.csgoroll.gg/withdraw/csgo/p2p",
 				"https://www.csgorolltr.com/withdraw/csgo/p2p"
 			],
-			"js": ["src/content/priceCheckInjector.js"],
+			"js": ["src/content/pricing.js"],
 			"css": ["src/css/global.css"]
 		}
 	],
@@ -57,16 +57,14 @@
 		"https://www.csgoroll.com/*",
 		"https://www.csgorolltr.com/*",
 		"https://www.csgoroll.gg/*",
-		"https://prices.csgotrader.app/*",
-		"https://api.pricempire.com/*"
+		"https://cspricebase.com/*"
 	],
 	"web_accessible_resources": [
 		{
 			"matches": ["<all_urls>"],
 			"resources": [
 				"assets/rates/rates.json",
-				"assets/ico/pelogo.png",
-				"assets/ico/cstlogo.png"
+				"assets/ico/csp.png"
 			]
 		}
 	]

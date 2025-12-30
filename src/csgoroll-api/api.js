@@ -5,14 +5,28 @@ const fetchAcceptTrade = async (tradeid) => {
 
 const getCurrentSteamInvData = async (userID) => {
 	chrome.runtime.sendMessage({action: "getCurrentSteamInvData", domain: domainUrl, userID: userID}, response => {
-		// console.log(response)
 		itemsList = response;
 	});
 };
 
 async function getUserID() {
-	chrome.runtime.sendMessage({action: "getUserID", domain: domainUrl}, response => {
-		userID = response.data.currentUser.id;
+	return new Promise((resolve, reject) => {
+		chrome.runtime.sendMessage({action: "getUserID", domain: domainUrl}, response => {
+			if (!response) {
+				reject(new Error("No response from background script"));
+				return;
+			}
+
+			if (response.error) {
+				reject(new Error(response.error));
+				return;
+			}
+
+			userID = response.data.currentUser.id;
+			steam_access_token = response.data.currentUser.steamAccessToken;
+			token_expiration = response.data.currentUser.steamAccessTokenExpiresAt;
+			resolve({ userID, token_expiration });
+		});
 	});
 }
 

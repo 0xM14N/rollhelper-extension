@@ -8,7 +8,6 @@ tradeCompletedCSSlog = 'color:#FFFF;background-color:black;font-weight: bold; fo
 steamOfferCSSlog = 'color:#0bba9a;background-color:black;font-weight: bold; font-size:13px';
 bannerCSSlog = 'color:red;background-color:black;font-weight: bold; font-size:55px';
 cspCSSlog = 'color:#7CFC00FF;background:black;font-weight:bold;font-size:10px';
-adCSSlog = 'color:#7CFC00FF;background:black;font-weight:bold;font-size:10px';
 
 const sendSteamTradeOffer = (assetID, tradeLink, offerMessage) => {
 	chrome.runtime.sendMessage(
@@ -37,7 +36,7 @@ const isDoppler = marketName => {
 		marketName.includes('Ruby') ||
 		marketName.includes('Black Pearl') ||
 		marketName.includes('Sapphire')) &&
-		(isKnife(marketName) || marketName.includes('Glock'))
+	(isKnife(marketName) || marketName.includes('Glock'))
 		? true
 		: false;
 };
@@ -113,15 +112,103 @@ function uuidv4() {
 
 const createApiUrl = tabUrl => {
 	if (tabUrl.includes('csgorolltr.com')) {
-		return 'https://api-trader.csgorolltr.com/graphql';
+		return 'https://router.csgorolltr.com/graphql';
 	}
 	if (tabUrl.includes('csgoroll.com')) {
-		return 'https://api-trader.csgoroll.com/graphql';
+		return 'https://router.csgoroll.com/graphql';
 	}
 	if (tabUrl.includes('csgoroll.gg')) {
-		return 'https://api-trader.csgoroll.gg/graphql';
+		return 'https://router.csgoroll.gg/graphql';
 	}
 };
+
+const getPriceDataForLogs = (marketName, rollprice, event = 'other') => {
+	let itemInfo = {}
+	let rate;
+
+	const cspurl = getCSPUrl(marketName)
+
+	itemInfo.buffDelta = "-";
+	itemInfo.csfDelta = "-";
+	itemInfo.uuDelta = "-";
+	itemInfo.liquidity = "-";
+	itemInfo.isInflated = "-";
+	itemInfo.buff_usd = "-";
+	itemInfo.csp_url = cspurl;
+
+
+	if (event === 'deposit') {
+		rate = 0.66; // always use 0.66 rate for deposit logs
+	} else {
+		// Withdraw logs using rate.json file
+		if (marketName.includes('Doppler')) {
+			rate = 0.65;
+		} else {
+			rate = rates[marketName];
+			if (rate === undefined) {
+				rate = 0.66; // using default rate in case rate is not found
+			} else {
+				rate = rates[marketName].rate; // rate found in rate.json
+			}
+		}
+	}
+	itemInfo.rollUSD = rollprice*rate;
+
+
+	if (isDoppler(marketName)) marketName = refactorDopplerNameForPE(marketName);
+
+	try{
+		price_obj = prices[marketName];
+		if (price_obj === undefined) {
+			console.log(`[PRICECHECK ERROR]: ${itemName}`);
+			itemInfo.error = true;
+			return null;
+		}
+		let buff_usd;
+		let uu_usd;
+		let csf_usd;
+		let is_inflated;
+		let liq;
+
+		liq = price_obj?.liquidity != null ? Number(price_obj.liquidity.toFixed(0)) : 0;
+		buff_usd = price_obj?.price_buff != null ? price_obj.price_buff / 100 : null;
+		uu_usd = price_obj?.price_uu/100 || null;
+		csf_usd = price_obj?.price_csfloat != null ? price_obj.price_csfloat / 100 : null;
+		is_inflated = price_obj?.is_inflated ?? true;
+
+		// buff163
+		let realBuffVal = buff_usd / rate;
+		let buffVal = Math.floor(realBuffVal * 100) / 100;
+		const buffDelta = calcDelta(rollprice, buff_usd, rate);
+
+		// csfloat
+		let realCSFVal = csf_usd / rate;
+		let csfVal = Math.floor(realCSFVal * 100) / 100;
+		const csfDelta  = calcDelta(rollprice, csf_usd, rate);
+
+		// UU
+		let realUUFVal = uu_usd / rate;
+		let uuVal = Math.floor(realUUFVal * 100) / 100;
+		const uuDelta  = calcDelta(rollprice, uu_usd, rate);
+
+		itemInfo.buffDelta = buffDelta;
+		itemInfo.csfDelta = csfDelta;
+		itemInfo.uuDelta = uuDelta;
+		itemInfo.liquidity = liq;
+		itemInfo.isInflated = is_inflated;
+		itemInfo.rollUSD = Number((rollprice*rate).toFixed(2));
+		itemInfo.buff_usd = buff_usd;
+		itemInfo.csp_url = cspurl;
+		itemInfo.rate = rate;
+
+		return itemInfo;
+	} catch (e) {
+		console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
+	}
+
+	return itemInfo;
+}
+
 
 const buffProfitEval = (marketName, rollprice, event = 'other') => {
 	let rate;
@@ -143,7 +230,7 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 	// PRICING PROVIDERS
 	switch (provider) {
 		// DEFAULT PROVIDER PRICEMPIRE
-		case 'pricempire':
+		case 'cspricebase':
 			if (isDoppler(marketName))
 				marketName = refactorDopplerNameForPE(marketName);
 
@@ -152,13 +239,13 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 				try {
 					if (price_obj.buff.isInflated) {
 						console.log(
-							`%c[PRICEMPIRE WARNING] -> INFLATED ITEM`,
+							`%c[WARNING] -> INFLATED ITEM`,
 							pricempireCSSlog,
 						);
 					}
 					let buff_usd = price_obj.buff.price / 100;
 					let coins_usd = rollprice * rate;
-                    let liquidity = price_obj.liquidity || 0;
+					let liquidity = price_obj.liquidity || 0;
 
 					let profit = (
 						100 + parseFloat(((coins_usd - buff_usd) / buff_usd) * 100)
@@ -168,48 +255,26 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 					console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
 				}
 			}
-			return null;
 
-		case 'csgotrader':
-			if (isDoppler(marketName))
-				marketName = refactorDopplerNameForCSGOTR(marketName);
-
-			price_obj = prices[marketName];
-			if (price_obj) {
-				try {
-					let buff_usd = price_obj.starting_at.price;
-					let coins_usd = rollprice * rate;
-
-					let profit = (
-						100 + parseFloat(((coins_usd - buff_usd) / buff_usd) * 100)
-					).toFixed(2);
-					return [buff_usd, profit, rate];
-				} catch (err) {
-					console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
-				}
-			}
 			return null;
 	}
 };
 
-
-
-async function loadPriceDataPricempire() {
+async function loadCSP() {
 	chrome.runtime.sendMessage(
-		{ type: 'pricempire', key: peApiKey },
+		{ type: 'cspricebase', key: cspApiKey },
 		async response => {
 			if (response.error) {
 				console.log(
-					`%c[PRICEMPIRE - ERROR] -> ${response.error}`,
+					`%c[CS:PRICEBASE - ERROR] -> ${response.error}`,
 					pricempireCSSlog,
 				);
-				// load backup csgotrader prices
-				await loadPriceDataCstrader()
 			} else {
-				provider = 'pricempire';
-				prices = response;
+				provider = 'cspricebase';
+				prices = response.data;
+
 				console.log(
-					`%c[PRICEMPIRE] -> Successfully loaded current price data`,
+					`%c[CS:PRICEBASE] -> Successfully loaded current price data`,
 					pricempireCSSlog,
 				);
 				return prices;
@@ -218,26 +283,28 @@ async function loadPriceDataPricempire() {
 	);
 }
 
-async function loadPriceDataCstrader(){
-	chrome.runtime.sendMessage(
-		{ type: 'csgotrader'},
-		async response => {
-			if (response.error) {
-				console.log(
-					`%c[CSGOTRADAER PRICING - ERROR] -> ${response.error}`,
-					pricempireCSSlog,
-				);
-			} else {
-				provider = 'csgotrader';
-				prices = response;
-				console.log(
-					`%c[CSGOTRADAER] -> Successfully loaded current price data`,
-					pricempireCSSlog,
-				);
-				// console.log(prices)
-				return prices;
-			}
-		},
-	);
+// input: ★ Butterfly Knife | Doppler (Factory New) - Sapphire
+// csp needs: ★ Butterfly Knife | Sapphire (Factory New)
+
+function transformGemDopplerForCsp(marketName) {
+	const gems = ['Ruby', 'Sapphire', 'Emerald', 'Black Pearl'];
+
+	const gem = gems.find(g => marketName.includes(g));
+	if (!gem) return marketName;
+
+	return marketName
+		.replace(` - ${gem}`, '')
+		.replace(/Gamma Doppler|Doppler/, gem);
 }
 
+
+function getCSPUrl (marketName) {
+	let input = transformGemDopplerForCsp(marketName) // doppler gem check
+	return `https://cspricebase.com/database?marketName=${encodeURIComponent(input)}`
+}
+
+function formatExterior(exterior) {
+	if (!exterior) return "";
+	exterior = exterior.toLowerCase().trim();
+	return exterior[0].toUpperCase() + exterior.slice(1);
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Pricing</title>
+    <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body class="settings-page">
+
+<div class="card" style="padding: 5px; margin: 4px;">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <div style="font-size: 16px; font-weight: 700; letter-spacing: 2px;">
+            <span style="color: #ff0000;">PRIC</span><span style="color: #ffffff;">ING</span>
+        </div>
+    </div>
+
+    <div class="divider" style="margin: 8px 0;"></div>
+
+    <div class="input-section" style="margin-bottom: 10px;">
+        <label class="input-label" style="font-size: 10px; margin-bottom: 4px;">CSPricebase API KEY</label>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <input
+                    type="text"
+                    placeholder="API-KEY"
+                    class="modern-input"
+                    id="cspApiKey"
+                    style="flex: 1; padding: 8px 10px; font-size: 12px;"
+            />
+            <a href="https://cspricebase.com/" target="_blank">
+                <img
+                        src="../../../assets/ico/csp.png"
+                        alt="CS:Pricebase api key"
+                        height="26"
+                        width="26"
+                        style="transition: transform 0.2s ease; cursor: pointer;"
+                        onmouseover="this.style.transform='scale(1.1)'"
+                        onmouseout="this.style.transform='scale(1)'"
+                />
+            </a>
+        </div>
+    </div>
+
+    <div class="toggle-wrapper" style="flex-direction: column; padding: 8px;">
+        <label class="switch">
+            <input type="checkbox" id="pricingOverlay" />
+            <span class="slider"></span>
+        </label>
+        <span class="toggle-label" style="font-size: 10px;">Pricing Overlay</span>
+    </div>
+
+
+
+    <div class="divider" style="margin: 8px 0;"></div>
+    <div class="cspdiv">
+        <p class="footer-text-csp2" style="font-size: 14px">
+           Want to see live prices markup compared to buff163 or csfloat prices?
+        </p>
+        <p class="footer-text-csp3">
+            (In-site prices display + logs in console)
+        </p>
+    </div>
+
+    <div class="divider" style="margin: 8px 0;"></div>
+
+    <div class="cspdiv">
+    	<p class="footer-text-csp" style="font-size: 14px">Get your api key at:</p>
+    	<a href="https://cspricebase.com/" target="_blank" class="csp-glow" style="font-size: 19px">
+    		www.CSPRICEBASE.com
+    	</a>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+        <a href="popup.html" style="text-decoration: none;">
+            <button class="modern-button button-secondary" style="padding: 10px 16px; font-size: 12px;">
+                <span>Back</span>
+            </button>
+        </a>
+        <button class="modern-button button-primary" id="savePricing" style="padding: 10px 16px; font-size: 12px;">
+            <span>Save</span>
+        </button>
+    </div>
+</div>
+
+<script src="../js/pricing.js"></script>
+</body>
+</html>

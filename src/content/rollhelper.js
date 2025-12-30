@@ -1,12 +1,8 @@
 console.log(
-    `%c[ROLLHELPER] [v1.1.9]`,
+    `%c[ROLLHELPER | FREE] [v1.2]`,
     'color:#eb0909;font-weight: bold; font-size:23px',
 );
 
-console.log(
-    `%cInterested in custom features / upgrades (token updater, always-on store, etc) Contact me at discord: maintrades`,
-    'color:#7CFC00FF;background:black;font-weight:bold;font-size:10px',
-);
 
 let pi;
 let rates;
@@ -20,8 +16,11 @@ let reconnectAttempts = 0;
 let messageQueue = [];
 let messageQueueLocked = true;
 const MAX_RECONNECT_ATTEMPTS = 9;
-const RECONNECT_BASE_DELAY = 62_000; // 62s
-const RECONNECT_MAX_DELAY = 82_000;// 82s
+const RECONNECT_BASE_DELAY = 60_000; // 60s
+const RECONNECT_MAX_DELAY = 82_000; // 82s
+
+let steam_access_token;
+let token_expiration;
 
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -62,6 +61,7 @@ const fetchRates = async () => {
         });
 };
 
+
 const askForOpenWs = userID => {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
@@ -91,6 +91,8 @@ const initRollhelper = async () => {
         await getCurrentSteamInvData(userID);
         await updateSettings();
         await initConnection();
+        prices = await loadCSP();
+
     } catch (error) {
         console.error('Error in initRollhelper:', error);
     }
@@ -123,7 +125,7 @@ function enqueueMessage(message) {
 
 function sp() {
     try {
-         if (socket.readyState == WebSocket.OPEN){
+        if (socket.readyState == WebSocket.OPEN){
             socket.send(JSON.stringify({ type: "ping" }))
         }
     } catch (e) {
@@ -142,7 +144,7 @@ function connectWSS() {
     }
 
     socket = new WebSocket(
-        'wss://api-trader.csgoroll.com/graphql',
+        'wss://router.csgoroll.com/ws',
         'graphql-transport-ws',
     );
 
@@ -218,42 +220,34 @@ function connectWSS() {
                         maxMarkup = evalMaxMarkup(basePrice, addedStickersValue);
                     }
 
-                    let usd;
-                    let profit;
-                    let rate;
-                    let eval_res = buffProfitEval(marketName, value, 'deposit');
-
-                    usd = eval_res ? eval_res[0] : '-';
-                    profit = eval_res ? eval_res[1] : '-';
-                    rate = eval_res ? eval_res[2] : '-';
-                    coinsToUsd = eval_res ? (value * rate).toFixed(2) : '-';
-                    liquidity = eval_res ? eval_res[3] : '-';
+                    const pricing_data = getPriceDataForLogs(marketName, value, "deposit")
 
                     let trade_info = {
+                        liquidity: pricing_data.liquidity,
                         marketname: marketName,
                         float: float,
                         value: value,
                         markup: markup,
                         maxMarkup: maxMarkup,
-                        coins_usd: coinsToUsd,
-                        buff163: usd,
-                        buff_percent: profit,
+                        coins_usd: pricing_data.rollUSD,
+                        buff163: pricing_data.buff_usd,
+                        buff_percent: pricing_data.buffDelta,
+                        csf_percent: pricing_data.csfDelta,
+                        uu_percent: pricing_data.uuDelta,
                         withdrawer_name: withdrawerName,
                         withdrawer_id: withdrawerID,
                         iconUrl: icon_url,
+                        csp_url: pricing_data.cspurl,
+                        rate: pricing_data.rate,
                     };
 
-                    const encodedItemName = encodeURIComponent(marketName)
-                        .replace(/\(/g, '%28')
-                        .replace(/\)/g, '%29');
-                    const buffUrl =
-                        'https://api.pricempire.com/v1/redirectBuff/' + encodedItemName;
                     console.log(
-                        `%c${DateFormater(new Date())} | [DEPOSIT]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+                        `%c${DateFormater(new Date())} | [DEPOSIT]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163]: ${trade_info.buff_percent > 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT]: ${trade_info.csf_percent > 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN]: ${trade_info.uu_percent > 0 ? "+" : ""}${trade_info.uu_percent}% (RATE: ${trade_info.rate})`,
                         depositCSSlog,
                     );
-                    console.log(buffUrl);
-                    itemInfo.tradeInfo = `[DEPOSIT]\n${marketName}\n${value} coins | +${markup}%\n[FV: ${float}]`;
+                    console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
+
+                    itemInfo.tradeInfo = `[DEPOSIT]\n${marketName}\n${value} coins | +${markup}%]`;
                     if (depoAlert) {
                         if (Pushover) {
                             sendPushoverNotification(itemInfo);
@@ -295,15 +289,24 @@ function connectWSS() {
                         maxMarkup = evalMaxMarkup(basePrice, addedStickersValue);
                     }
 
-                    let eval_res = buffProfitEval(marketName, value);
-                    usd = eval_res ? eval_res[0] : '-';
-                    profit = eval_res ? eval_res[1] : '-';
-                    rate = eval_res ? eval_res[2] : '-';
-                    coinsToUsd = eval_res ? (value * rate).toFixed(2) : '-';
-                    liquidity = eval_res ? eval_res[3] : '-';
+                    const pricing_data = getPriceDataForLogs(marketName, value)
+
+                    let trade_info = {
+                        liquidity: pricing_data.liquidity,
+                        marketname: marketName,
+                        markup: markup,
+                        maxMarkup: maxMarkup,
+                        coins_usd: pricing_data.rollUSD,
+                        buff163: pricing_data.buff_usd,
+                        buff_percent: pricing_data.buffDelta,
+                        csf_percent: pricing_data.csfDelta,
+                        uu_percent: pricing_data.uuDelta,
+                        csp_url: pricing_data.cspurl,
+                        rate: pricing_data.rate,
+                    };
 
                     console.log(
-                        `%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\tROLLNAME: ${rollName}\n\tRollID: ${rollID}\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+                        `%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}$\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%\n(RATE:${trade_info.rate})`,
                         noticeCSSlog,
                     );
                 }
@@ -337,30 +340,27 @@ function connectWSS() {
                     maxMarkup = evalMaxMarkup(basePrice, addedStickersValue);
                 }
 
-                let eval_res = buffProfitEval(marketName, value);
-                usd = eval_res ? eval_res[0] : '-';
-                profit = eval_res ? eval_res[1] : '-';
-                rate = eval_res ? eval_res[2] : '-';
-                coinsToUsd = eval_res ? (value * rate).toFixed(2) : '-';
-                liquidity = eval_res ? eval_res[3] : '-';
 
+                const pricing_data = getPriceDataForLogs(marketName, value)
                 let trade_info = {
+                    liquidity: pricing_data.liquidity,
                     marketname: marketName,
-                    float: float,
-                    value: value,
                     markup: markup,
                     maxMarkup: maxMarkup,
-                    coins_usd: coinsToUsd,
-                    buff163: usd,
-                    buff_percent: profit,
-                    iconUrl: icon_url,
+                    coins_usd: pricing_data.rollUSD,
+                    buff163: pricing_data.buff_usd,
+                    buff_percent: pricing_data.buffDelta,
+                    csf_percent: pricing_data.csfDelta,
+                    uu_percent: pricing_data.uuDelta,
+                    csp_url: pricing_data.cspurl,
+                    rate: pricing_data.rate,
                 };
 
                 console.log(
-                    `%c${DateFormater(new Date())} | [TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+                    `%c${DateFormater(new Date())} | [TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`,
                     tradeCompletedCSSlog,
                 );
-                itemInfo.tradeInfo = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%\n[FV: ${float}]`;
+                itemInfo.tradeInfo = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && completedAlert) {
                     if (Pushover) sendPushoverNotification(itemInfo);
@@ -377,22 +377,20 @@ function connectWSS() {
                 let marketName = trade.tradeItems[0].marketName;
                 let markup = trade.tradeItems[0].markupPercent;
                 let value = trade.tradeItems[0].value;
-                let float = trade.avgPaintWear;
                 let icon_url = trade.tradeItems[0].itemVariant.iconUrl;
 
                 let trade_info = {
                     marketname: marketName,
-                    float: float,
                     value: value,
                     markup: markup,
                     iconUrl: icon_url,
                 };
 
                 console.log(
-                    `%c${DateFormater(new Date())} | [TRADE - COOLDOWN]\n\t${marketName}\n\t${value} coins | (${markup}%)\n\t[FV]: ${float}`,
+                    `%c${DateFormater(new Date())} | [TRADE - COOLDOWN]\n${marketName}\n${value} coins | (${markup}%)`,
                     errorCSSlog,
                 );
-                itemInfo.tradeInfo = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | +${markup}%\n[FV: ${float}]`;
+                itemInfo.tradeInfo = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && cooldownAlert) {
                     if (Pushover) sendPushoverNotification(itemInfo);
@@ -490,41 +488,33 @@ function connectWSS() {
                         maxMarkup = evalMaxMarkup(basePrice, addedStickersValue);
                     }
 
-                    let eval_res = buffProfitEval(marketName, value);
-                    usd = eval_res ? eval_res[0] : '-';
-                    profit = eval_res ? eval_res[1] : '-';
-                    rate = eval_res ? eval_res[2] : '-';
-                    coinsToUsd = eval_res ? (value * rate).toFixed(2) : '-';
-                    liquidity = eval_res ? eval_res[3] : '-';
+                    const pricing_data = getPriceDataForLogs(marketName, value, "deposit")
 
                     let trade_info = {
+                        liquidity: pricing_data.liquidity,
                         marketname: marketName,
                         float: float,
                         value: value,
                         markup: markup,
                         maxMarkup: maxMarkup,
-                        coins_usd: coinsToUsd,
-                        buff163: usd,
-                        buff_percent: profit,
+                        coins_usd: pricing_data.rollUSD,
+                        buff163: pricing_data.buff_usd,
+                        buff_percent: pricing_data.buffDelta,
+                        csf_percent: pricing_data.csfDelta,
+                        uu_percent: pricing_data.uuDelta,
                         iconUrl: icon_url,
+                        csp_url: pricing_data.cspurl,
+                        rate: pricing_data.rate,
                     };
 
-                    const encodedItemName = encodeURIComponent(marketName)
-                        .replace(/\(/g, '%28')
-                        .replace(/\)/g, '%29');
-                    const buffUrl =
-                        'https://api.pricempire.com/v1/redirectBuff/' + encodedItemName;
-                    const cspUrl = "https://cspricebase.com/database?marketName=" + encodedItemName;
-
                     console.log(
-                        `%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${coinsToUsd}$\n\t[LIQ]: ${liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n\t[BUFF163]: ${usd}$ (RATE: ${rate})\n\t[Price-Of-BUFF]: ${profit}%`,
+                        `%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`,
                         withdrawAcceptedCSSlog,
                     );
 
-                    console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, cspUrl);
+                    console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
 
-
-                    itemInfo.tradeInfo = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n[FV: ${float}]\n [STICKERS]:\n${formattedStickersText}`;
+                    itemInfo.tradeInfo = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n\n [STICKERS]:\n${formattedStickersText}`;
 
                     if (withdrawAlert == true) {
                         if (Pushover) sendPushoverNotification(itemInfo);

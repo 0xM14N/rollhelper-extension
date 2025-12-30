@@ -51,10 +51,10 @@ const sendWebHookDiscord = (
 					],
 					author: {
 						name: `ROLLHELPER`,
-						url: `https://old.pricempire.com/r/rollhelper`,
+						url: `https://cspricebase.com/`,
 					},
 					footer: {
-						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on PE via link bellow! (dev / enterprise)\nhttps://www.old.pricempire.com/r/rollhelper`,
+						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on CS:Pricebase via link bellow! (Premium / Free Trial)\nhttps://www.cspricebase.com/`,
 					},
 					thumbnail: {
 						url: tradeInfo.iconUrl,
@@ -109,10 +109,10 @@ const sendWebHookDiscord = (
 					],
 					author: {
 						name: `ROLLHELPER`,
-						url: `https://old.pricempire.com/r/rollhelper`,
+						url: `https://cspricebase.com/`,
 					},
 					footer: {
-						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on PE via link bellow! (dev / enterprise)\nhttps://www.old.pricempire.com/r/rollhelper`,
+						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on CS:Pricebase via link bellow! (Premium / Free Trial)\nhttps://www.cspricebase.com/`,
 					},
 					thumbnail: {
 						url: tradeInfo.iconUrl,
@@ -166,10 +166,10 @@ const sendWebHookDiscord = (
 					],
 					author: {
 						name: `ROLLHELPER`,
-						url: `https://old.pricempire.com/r/rollhelper`,
+						url: `https://cspricebase.com/`,
 					},
 					footer: {
-						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on PE via link bellow! (dev / enterprise)\nhttps://www.old.pricempire.com/r/rollhelper`,
+						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on CS:Pricebase via link bellow! (Premium / Free Trial)\nhttps://www.cspricebase.com/`,
 					},
 					thumbnail: {
 						url: tradeInfo.iconUrl,
@@ -208,10 +208,10 @@ const sendWebHookDiscord = (
 					],
 					author: {
 						name: `ROLLHELPER`,
-						url: `https://old.pricempire.com/r/rollhelper`,
+						url: `https://cspricebase.com/`,
 					},
 					footer: {
-						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on PE via link bellow! (dev / enterprise)\nhttps://www.old.pricempire.com/r/rollhelper`,
+						text: `DONT SEE PRICING / COMPARASION?\nGet your subscription on CS:Pricebase via link bellow! (Premium / Free Trial)\nhttps://www.cspricebase.com/`,
 					},
 					thumbnail: {
 						url: tradeInfo.iconUrl,
