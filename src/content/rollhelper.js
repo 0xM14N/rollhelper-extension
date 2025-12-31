@@ -465,9 +465,6 @@ function connectWSS() {
                                 steamOfferCSSlog,
                             );
                             break;
-                        }else {
-                            // item has not been found in roll inv api (api down etc..)
-                            sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`);
                         }
                     }
 
@@ -476,6 +473,7 @@ function connectWSS() {
                             `%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer error (item not found)]`,
                             errorCSSlog,
                         );
+                        sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`);
                     }
                 }
 
