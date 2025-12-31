@@ -1,8 +1,26 @@
-console.log(
-    `%c[ROLLHELPER | FREE] [v1.2]`,
-    'color:#eb0909;font-weight: bold; font-size:23px',
-);
+let version = `1.2.1`;
 
+console.log(
+    `%cROLLHELPER | FREE  %cv${version}`,
+    `
+    color: #eb0909;
+    font-weight: bold;
+    font-size: 20px;
+  `,
+    `
+    color: #999;
+    font-size: 12px;
+    vertical-align: super;
+  `
+);
+console.log(
+    `%c Need premium / custom features? → Discord: maintrades `,
+    `
+    color: #ff8c00;
+    font-size: 11px;
+    font-weight: bold;
+  `
+);
 
 let pi;
 let rates;
@@ -78,7 +96,6 @@ const askForOpenWs = userID => {
 };
 
 const initRollhelper = async () => {
-    itemInfo = {};
     prices = {};
     rates = {};
 
@@ -241,16 +258,19 @@ function connectWSS() {
                         rate: pricing_data.rate,
                     };
 
+                    let log_string = `[DEPOSIT]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163]: ${trade_info.buff_percent > 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT]: ${trade_info.csf_percent > 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN]: ${trade_info.uu_percent > 0 ? "+" : ""}${trade_info.uu_percent}% (RATE: ${trade_info.rate})`
+
                     console.log(
-                        `%c${DateFormater(new Date())} | [DEPOSIT]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163]: ${trade_info.buff_percent > 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT]: ${trade_info.csf_percent > 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN]: ${trade_info.uu_percent > 0 ? "+" : ""}${trade_info.uu_percent}% (RATE: ${trade_info.rate})`,
+                        `%c${DateFormater(new Date())} | ${log_string}`,
                         depositCSSlog,
                     );
                     console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
 
-                    itemInfo.tradeInfo = `[DEPOSIT]\n${marketName}\n${value} coins | +${markup}%]`;
+                   // pushover_msg = `[DEPOSIT]\n${marketName}\n${value} coins | +${markup}%]`;
+
                     if (depoAlert) {
                         if (Pushover) {
-                            sendPushoverNotification(itemInfo);
+                            sendPushoverNotification(log_string);
                         }
                         if (discord) {
                             sendWebHookDiscord(
@@ -306,7 +326,7 @@ function connectWSS() {
                     };
 
                     console.log(
-                        `%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}$\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%\n(RATE:${trade_info.rate})`,
+                        `%c${DateFormater(new Date())} | [WITHDRAW - WAITING]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%\n(RATE:${trade_info.rate})`,
                         noticeCSSlog,
                     );
                 }
@@ -356,14 +376,15 @@ function connectWSS() {
                     rate: pricing_data.rate,
                 };
 
+                let log_string = `[TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`
                 console.log(
-                    `%c${DateFormater(new Date())} | [TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`,
+                    `%c${DateFormater(new Date())} | ${log_string}`,
                     tradeCompletedCSSlog,
                 );
-                itemInfo.tradeInfo = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%`;
+                // pushover_msg = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && completedAlert) {
-                    if (Pushover) sendPushoverNotification(itemInfo);
+                    if (Pushover) sendPushoverNotification(log_string);
                     if (discord)
                         sendWebHookDiscord(
                             Webhook,
@@ -386,14 +407,15 @@ function connectWSS() {
                     iconUrl: icon_url,
                 };
 
+                let log_string = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | (${markup}%)`
                 console.log(
-                    `%c${DateFormater(new Date())} | [TRADE - COOLDOWN]\n${marketName}\n${value} coins | (${markup}%)`,
+                    `%c${DateFormater(new Date())} | ${log_string}`,
                     errorCSSlog,
                 );
-                itemInfo.tradeInfo = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | +${markup}%`;
+                pushover_msg = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && cooldownAlert) {
-                    if (Pushover) sendPushoverNotification(itemInfo);
+                    if (Pushover) sendPushoverNotification(log_string);
                     if (discord)
                         sendWebHookDiscord(
                             Webhook,
@@ -443,6 +465,9 @@ function connectWSS() {
                                 steamOfferCSSlog,
                             );
                             break;
+                        }else {
+                            // item has not been found in roll inv api (api down etc..)
+                            sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`);
                         }
                     }
 
@@ -454,7 +479,7 @@ function connectWSS() {
                     }
                 }
 
-                // WITHDRAW-ACCEPTED EVENT
+                // WITHDRAWACCEPTED-EVENT
                 if (trade.depositor.id != userID) {
                     let marketName = trade.tradeItems[0].marketName;
                     let markup =
@@ -507,17 +532,19 @@ function connectWSS() {
                         rate: pricing_data.rate,
                     };
 
+                    let log_string = ` [WITHDRAW - ACCEPTED]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`
+
                     console.log(
-                        `%c${DateFormater(new Date())} | [WITHDRAW - ACCEPTED]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`,
+                        `%c${DateFormater(new Date())} | ${log_string}`,
                         withdrawAcceptedCSSlog,
                     );
 
                     console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
 
-                    itemInfo.tradeInfo = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n\n [STICKERS]:\n${formattedStickersText}`;
+                    // pushover_msg = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n\n [STICKERS]:\n${formattedStickersText}`;
 
                     if (withdrawAlert == true) {
-                        if (Pushover) sendPushoverNotification(itemInfo);
+                        if (Pushover) sendPushoverNotification(log_string);
                         if (discord)
                             sendWebHookDiscord(
                                 Webhook,

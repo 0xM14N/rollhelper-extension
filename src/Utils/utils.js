@@ -160,10 +160,11 @@ const getPriceDataForLogs = (marketName, rollprice, event = 'other') => {
 	try{
 		price_obj = prices[marketName];
 		if (price_obj === undefined) {
-			console.log(`[PRICECHECK ERROR]: ${itemName}`);
+			console.log(`[PRICECHECK ERROR] (Not found in pricing object): ${marketName}`);
 			itemInfo.error = true;
-			return null;
+			return itemInfo;
 		}
+
 		let buff_usd;
 		let uu_usd;
 		let csf_usd;
@@ -189,21 +190,22 @@ const getPriceDataForLogs = (marketName, rollprice, event = 'other') => {
 		// UU
 		let realUUFVal = uu_usd / rate;
 		let uuVal = Math.floor(realUUFVal * 100) / 100;
-		const uuDelta  = calcDelta(rollprice, uu_usd, rate);
+		const uuDelta = calcDelta(rollprice, uu_usd, rate);
 
 		itemInfo.buffDelta = buffDelta;
 		itemInfo.csfDelta = csfDelta;
 		itemInfo.uuDelta = uuDelta;
 		itemInfo.liquidity = liq;
 		itemInfo.isInflated = is_inflated;
-		itemInfo.rollUSD = Number((rollprice*rate).toFixed(2));
+		itemInfo.rollUSD = (rollprice*rate).toFixed(2);
 		itemInfo.buff_usd = buff_usd;
 		itemInfo.csp_url = cspurl;
 		itemInfo.rate = rate;
 
 		return itemInfo;
 	} catch (e) {
-		console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
+		console.log(`%[PRICECHECK ERROR] (Unexpected pricing error):`, errorCSSlog);
+		console.log(e)
 	}
 
 	return itemInfo;

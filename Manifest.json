@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
-	"description": "Automation extension for traders on CSGOROLL",
-	"version": "1.2",
+	"description": "Trading automation extension for traders on CSGOROLL",
+	"version": "1.2.1",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -22,7 +22,6 @@
 			],
 			"js": [
 				"src/content/rollhelper.js",
-				"src/content/buttons.js",
 				"src/Utils/utils.js",
 				"src/csgoroll-api/wsPayloads.js",
 				"src/csgoroll-api/api.js",

@@ -22,9 +22,9 @@ const acceptTrade = tradeid => {
 	);
 };
 
-
+const subscriptionId = uuidv4();
 let updateTradePayload = {
-	id: uuidv4(),
+	id: subscriptionId,
 	type: 'subscribe',
 	payload: {
 		variables: {
