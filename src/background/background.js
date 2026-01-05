@@ -1,5 +1,7 @@
 activeWs = new Set();
 
+const MAX_STEAM_INV_RETRIES = 10;
+
 function getCsgorollCookies() {
 	return new Promise((resolve) => {
 		chrome.cookies.getAll({
@@ -13,19 +15,104 @@ function getCsgorollCookies() {
 	});
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+async function getSessionCookie() {
+	const allCookies = await getCsgorollCookies();
+	const sessionCookie = allCookies
+		.split('; ')
+		.find(cookie => cookie.startsWith('session='));
 
+	return sessionCookie || null;
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+	if (request.type === 'getSessionCookie') {
+		getSessionCookie().then(session => {
+			sendResponse({ session });
+		}).catch(err => {
+			console.error(err);
+			sendResponse({ session: null });
+		});
+
+		return true;
+	}
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+	chrome.alarms.create('refresh_cspricebase', {
+		periodInMinutes: 45
+	});
+});
+
+chrome.alarms.onAlarm.addListener(async (alarm) => {
+	if (alarm.name === 'refresh_cspricebase') {
+		await refreshCsPriceBase();
+	}
+});
+
+async function refreshCsPriceBase() {
+	const API_URL = `https://cspricebase.com/api/get-rollhelper-prices/`;
+	const EXTENSION_CACHE_DURATION = 20 * 60 * 1000;
+
+	const { pricing_timestamp, pricing_etag, pricing_data, apiKey } =
+		await chrome.storage.local.get([
+			'pricing_timestamp',
+			'pricing_etag',
+			'pricing_data',
+			'apiKey'
+		]);
+
+	if (!apiKey) return;
+
+	const headers = {
+		Authorization: `Bearer ${apiKey}`
+	};
+
+	if (pricing_etag) {
+		headers['If-None-Match'] = pricing_etag;
+	}
+
+	const response = await fetch(API_URL, { headers, cache: 'no-store' });
+
+	const now = Date.now();
+
+	if (response.status === 304) {
+		await chrome.storage.local.set({ pricing_timestamp: now });
+		return;
+	}
+
+	if (!response.ok) return;
+
+	const data = await response.json();
+	const etag = response.headers.get('etag');
+
+	await chrome.storage.local.set({
+		pricing_data: data,
+		pricing_timestamp: now,
+		pricing_etag: etag
+	});
+
+	chrome.tabs.query({}, tabs => {
+		for (const tab of tabs) {
+			chrome.tabs.sendMessage(tab.id, {
+				type: 'PRICES_UPDATED',
+				data
+			});
+		}
+	});
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.action === "applyPromoApi") {
 		getCsgorollCookies().then(cookieString => {
 			const payload = {
 				operationName: "applyPromoCodeTimer",
 				query: `
 			  mutation applyPromoCodeTimer($input: ApplyPromoCodeInput!) {
-				applyPromoCodeTimer(input: $input) {
-				  promoCode
-				  secondsLeft
-				  status
-				  __typename
+					applyPromoCodeTimer(input: $input) {
+					  promoCode
+					  secondsLeft
+					  status
+					  __typename
 				}
 			  }
 			`,
@@ -71,102 +158,102 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 					operationName: 'CurrentUser',
 					variables: {},
 					query: `query CurrentUser {
-  currentUser {
-    ...User
-    __typename
-  }
-}
-
-fragment User on User {
-  steamAccessToken
-  steamAccessTokenExpiresAt
-  id
-  name
-  email
-  verified
-  currency
-  createdAt
-  acceptTos
-  avatar
-  steamId
-  mutedUntil
-  userProgress {
-    id
-    xp
-    requiredXp
-    nextRequiredXp
-    level
-    __typename
-  }
-  unlockedChat
-  lastDepositAt
-  stickyReferee
-  steamApiKey
-  steamTradeUrl
-  verificationStatus
-  totalDeposit
-  dailyWithdrawLimit
-  preferences {
-    ...UserPreferences
-    __typename
-  }
-  referralPromoCode {
-    id
-    code
-    __typename
-  }
-  team {
-    id
-    name
-    __typename
-  }
-  tickets {
-    total
-    __typename
-  }
-  wallets {
-    ...Wallet
-    __typename
-  }
-  market {
-    id
-    slug
-    name
-    __typename
-  }
-  trader
-  suspectedTrader
-  microphoneEnabled
-  __typename
-}
-
-fragment UserPreferences on UserPreferences {
-  id
-  name
-  lastName
-  address1
-  address2
-  postcode
-  region
-  city
-  country {
-    code
-    name
-    __typename
-  }
-  birthDate
-  gender
-  phone
-  __typename
-}
-
-fragment Wallet on Wallet {
-  id
-  name
-  amount
-  currency
-  __typename
-}`
+				  currentUser {
+					...User
+					__typename
+				  }
+				}
+				
+				fragment User on User {
+				  steamAccessToken
+				  steamAccessTokenExpiresAt
+				  id
+				  name
+				  email
+				  verified
+				  currency
+				  createdAt
+				  acceptTos
+				  avatar
+				  steamId
+				  mutedUntil
+				  userProgress {
+					id
+					xp
+					requiredXp
+					nextRequiredXp
+					level
+					__typename
+				  }
+				  unlockedChat
+				  lastDepositAt
+				  stickyReferee
+				  steamApiKey
+				  steamTradeUrl
+				  verificationStatus
+				  totalDeposit
+				  dailyWithdrawLimit
+				  preferences {
+					...UserPreferences
+					__typename
+				  }
+				  referralPromoCode {
+					id
+					code
+					__typename
+				  }
+				  team {
+					id
+					name
+					__typename
+				  }
+				  tickets {
+					total
+					__typename
+				  }
+				  wallets {
+					...Wallet
+					__typename
+				  }
+				  market {
+					id
+					slug
+					name
+					__typename
+				  }
+				  trader
+				  suspectedTrader
+				  microphoneEnabled
+				  __typename
+				}
+				
+				fragment UserPreferences on UserPreferences {
+				  id
+				  name
+				  lastName
+				  address1
+				  address2
+				  postcode
+				  region
+				  city
+				  country {
+					code
+					name
+					__typename
+				  }
+				  birthDate
+				  gender
+				  phone
+				  __typename
+				}
+				
+				fragment Wallet on Wallet {
+				  id
+				  name
+				  amount
+				  currency
+				  __typename
+				}`
 				})
 			})
 				.then(res => {
@@ -285,7 +372,7 @@ fragment Wallet on Wallet {
 						console.log(error);
 						invFailFetchCount += 1;
 						setTimeout(() => {
-							if (invFailFetchCount <= 5) {
+							if (invFailFetchCount <= MAX_STEAM_INV_RETRIES) {
 								fetchInv();
 							} else {
 								console.log(`[ROLLHELPER - ERROR] -> Max amount of tries reached - refresh the page to load inventory`);
@@ -348,7 +435,6 @@ fragment Wallet on Wallet {
 		return true;
 	}
 });
-
 
 
 chrome.runtime.onInstalled.addListener(details => {
@@ -417,12 +503,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			chrome.tabs.create({ url: tradelinkOffer });
 			return true;
 
-
 		case 'cspricebase':
 			(async () => {
 				try {
 					const API_URL = `https://cspricebase.com/api/get-rollhelper-prices/`;
-					const EXTENSION_CACHE_DURATION =  5 * 60 * 1000; // 15 mins
+
+					const EXTENSION_CACHE_DURATION =  20 * 60 * 1000; // 15 mins
 					const apiKey = msg.key;
 
 					if (!apiKey) {
@@ -455,11 +541,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 					}
 
 					const response = await fetch(API_URL, { headers, cache: 'no-store',  });
-
-					// console.log('Request headers:', headers);
-					// console.log('Response status:', response.status);
-					// console.log('Response headers:', [...response.headers.entries()]);
-					// console.log('Request went to network?', response.type); // ?basic
 
 					if (response.status === 304) {
 						console.log('Data unchanged (304), updating timestamp');

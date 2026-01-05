@@ -3,6 +3,11 @@ let cspApiKeyInput = document.getElementById('cspApiKey');
 let pricingSwitch = document.getElementById('pricingOverlay');
 
 
+// RESTORE THE UI
+document.addEventListener('DOMContentLoaded', function () {
+    restoreOptions();
+});
+
 pricingSwitch.addEventListener('change', function () {
     if (this.checked) {
         chrome.storage.sync.set({
@@ -14,7 +19,6 @@ pricingSwitch.addEventListener('change', function () {
         });
     }
 });
-
 
 saveBtn.addEventListener("click", async function () {
     let promiseStore = [];
@@ -30,12 +34,6 @@ saveBtn.addEventListener("click", async function () {
 })
 
 
-// RESTORE THE UI
-document.addEventListener('DOMContentLoaded', function () {
-    restoreOptions();
-});
-
-
 function restoreOptions() {
     chrome.storage.sync.get(['cspApi']).then(res => {
         if (!res.cspApi) cspApiKeyInput.placeholder = 'API-KEY';
@@ -45,8 +43,6 @@ function restoreOptions() {
     chrome.storage.sync.get(['enablePricingOverlay']).then(res => {
         pricingSwitch.checked = res.enablePricingOverlay;
     });
-
-
 }
 
 function callUpdateStorage() {

@@ -47,6 +47,15 @@
 					<span class="slider"></span>
 				</label>
 				<span class="toggle-label" style="font-size: 10px;">Deposit</span>
+				<!-- Added priority selector for Deposit -->
+				<input
+						type="number"
+						id="depoPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
 			</div>
 			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
 				<label class="switch">
@@ -54,6 +63,15 @@
 					<span class="slider"></span>
 				</label>
 				<span class="toggle-label" style="font-size: 10px;">Withdrawal</span>
+				<!-- Added priority selector for Withdrawal -->
+				<input
+						type="number"
+						id="withdrawPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
 			</div>
 			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
 				<label class="switch" >
@@ -61,6 +79,15 @@
 					<span class="slider"></span>
 				</label>
 				<span class="toggle-label" style="font-size: 10px;">Completed</span>
+				<!-- Added priority selector for Completed -->
+				<input
+						type="number"
+						id="completedPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
 			</div>
 			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
 				<label class="switch" >
@@ -68,12 +95,55 @@
 					<span class="slider"></span>
 				</label>
 				<span class="toggle-label" style="font-size: 10px;">Cooldown</span>
+				<!-- Added priority selector for Cooldown -->
+				<input
+						type="number"
+						id="cooldownPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
+			</div>
+			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
+				<label class="switch" >
+					<input type="checkbox" id="protectedAlert" />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Protected Deposit</span>
+				<!-- Added priority selector for Protected Deposit -->
+				<input
+						type="number"
+						id="protectedPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
+			</div>
+			<div class="toggle-wrapper" style="flex-direction: column; gap: 6px; padding: 8px;">
+				<label class="switch" >
+					<input type="checkbox" id="reversalAlert" disabled=true  />
+					<span class="slider"></span>
+				</label>
+				<span class="toggle-label" style="font-size: 10px;">Reversal</span>
+				<!-- Added priority selector for Reversal -->
+				<input
+						disabled="true"
+						type="number"
+						id="reversalPriority"
+						min="-2"
+						max="2"
+						value="0"
+						style="width: 50px; margin-top: 4px; padding: 4px; font-size: 10px; text-align: center; border: 1px solid #444; background: #222; color: #fff; border-radius: 4px;"
+				/>
 			</div>
 		</div>
 	</div>
+	<label class="input-label" style="font-size: 10px;">Number inputs under the switches are PUSHOVER priority settings</label>
+	<label class="input-label" style="font-size: 10px;"> (-2 Min | 2 MAX) </label>
 
 	<div class="divider" style="margin: 8px 0;"></div>
-
 
 	<div class="input-section" style="margin-bottom: 10px;">
 		<label class="input-label" style="font-size: 10px; margin-bottom: 4px;">Discord Webhook</label>
@@ -107,7 +177,6 @@
 				style="padding: 8px 10px; font-size: 12px;"
 		/>
 	</div>
-
 
 	<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
 		<a href="popup.html" style="text-decoration: none;">

@@ -13,7 +13,16 @@ const updateSettings = async () => {
 		{ token },
 		{ userkey },
 		{ webhook },
-		{ enablePricingOverlay }
+		{ enablePricingOverlay },
+		{ depoPushoverPriority },
+		{ withdrawPushoverPriority },
+		{ cooldownPushoverPriority },
+		{ completedPushoverPriority },
+		{ reversalPushoverPriority },
+		{ protectedPushoverPriority },
+		{ wantReversalAlert },
+		{ wantProtectedAlert },
+
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -29,12 +38,22 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['userkey']),
 		chrome.storage.sync.get(['webhook']),
 		chrome.storage.sync.get(['enablePricingOverlay']),
+		chrome.storage.sync.get(['depoPushoverPriority']),
+		chrome.storage.sync.get(['withdrawPushoverPriority']),
+		chrome.storage.sync.get(['cooldownPushoverPriority']),
+		chrome.storage.sync.get(['completedPushoverPriority']),
+		chrome.storage.sync.get(['reversalPushoverPriority']),
+		chrome.storage.sync.get(['protectedPushoverPriority']),
+		chrome.storage.sync.get(['wantReversalAlert']),
+		chrome.storage.sync.get(['wantProtectedAlert']),
 	]);
 
 	offerMessage = steamOfferMessage;
 	sendSteamOffers = wantSendOffers;
 	completedAlert = wantCompletedAlert;
 	cooldownAlert = wantCooldownAlert;
+	protectedAlert = wantProtectedAlert
+	reversalAlert = wantReversalAlert
 	discord = dcNotifyState;
 	withdrawAlert = wantWithdrawalAlert;
 	depoAlert = wantDepoAlert;
@@ -46,20 +65,12 @@ const updateSettings = async () => {
 	Webhook = webhook;
 	enablePricing = enablePricingOverlay;
 
-	// Console logs for each variable
-	// console.log('steamOfferMessage:', steamOfferMessage);
-	// console.log('wantSendOffers:', wantSendOffers);
-	// console.log('wantCompletedAlert:', wantCompletedAlert);
-	// console.log('wantCooldownAlert:', wantCooldownAlert);
-	// console.log('dcNotifyState:', dcNotifyState);
-	// console.log('wantWithdrawalAlert:', wantWithdrawalAlert);
-	// console.log('wantDepoAlert:', wantDepoAlert);
-	// console.log('peApi:', peApi);
-	// console.log('switchDepoState:', switchDepoState);
-	// console.log('switchNotifyState:', switchNotifyState);
-	// console.log('token:', token);
-	// console.log('userkey:', userkey);
-	// console.log('webhook:', webhook);
+	depositNotifPriority = depoPushoverPriority
+	withdrawNotifPriority = withdrawPushoverPriority
+	cooldownNotifPriority = cooldownPushoverPriority
+	completedNotifPriority = completedPushoverPriority
+	reversalNotifPriority =  reversalPushoverPriority
+	protectedNotifPriority = protectedPushoverPriority
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -100,7 +111,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			updateSettings();
 		});
 	}
-
 
 	if (msg.update) {
 		updateSettings();

@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
 	"description": "Trading automation extension for traders on CSGOROLL",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -50,7 +50,7 @@
 			"16": "assets/ico/coin-ico.png"
 		}
 	},
-	"permissions": ["storage", "tabs", "cookies"],
+	"permissions": ["storage", "tabs", "cookies", "scripting", "alarms"],
 	"host_permissions": [
 		"https://*.csgoroll.com/*",
 		"https://www.csgoroll.com/*",

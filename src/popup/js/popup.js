@@ -2,10 +2,28 @@ let saveBtn = document.getElementById('saveSettings');
 let switchDepo = document.getElementById('depoSwitch');
 let sendOfferSwitch = document.getElementById('sendOfferSwitch');
 let steamMsgInput = document.getElementById('steamOfferMessageInput');
+let sessionBtn = document.getElementById("copy-session-btn")
 
 document.addEventListener('DOMContentLoaded', function () {
 	restoreOptions();
 });
+
+sessionBtn.addEventListener("click", () => {
+	chrome.runtime.sendMessage({ type: 'getSessionCookie' }, async (response) => {
+		if (response && response.session) {
+			try {
+				await navigator.clipboard.writeText(response.session);
+				console.log('Session cookie copied to clipboard:', response.session);
+				alert('Session cookie copied!\nPLEASE HANDLE THIS COOKIE SAFELY!\nDO NOT HAND IT OVER TO UNTRUSTED SOURCES');
+			} catch (err) {
+				console.error('Failed to copy cookie:', err);
+			}
+		} else {
+			console.log('Session cookie not found');
+			alert('No session cookie found');
+		}
+	});
+})
 
 saveBtn.addEventListener('click', async function () {
 	let offerMessageValue = steamMsgInput.value;

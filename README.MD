@@ -14,7 +14,21 @@
 
 </div>
 
----
+# Recent Changes
+
+## v1.2.2 - 2026-01-05
+
+### ✨ Added
+- Session Cookie extractor (main popup)
+- Pushover notifications priority settings for trade events
+- Added youpin prices into the pricing overlay
+
+### 🔧 Changed
+- Improved in-site pricing overlay for better visibility
+
+
+### 🐛 Fixed
+- Minor issues with logs formatting / notifications
 
 ##  Table of Contents
 

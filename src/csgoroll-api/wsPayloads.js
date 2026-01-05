@@ -1,4 +1,3 @@
-// This does not work anymore via websocket... (replacement in api.js file)
 const acceptTrade = tradeid => {
 	socket.send(
 		JSON.stringify({

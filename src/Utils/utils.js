@@ -1,9 +1,8 @@
-// CONSOLE LOGGING CSS
 noticeCSSlog = 'color:#00FFFFFF;background-color:black;font-weight: bold; font-size:13px';
 depositCSSlog = 'color:yellow;background-color:black;font-weight: bold; font-size:13px';
 errorCSSlog = 'color:red;background-color:black;font-weight: bold; font-size:13px';
 withdrawAcceptedCSSlog = 'color:#7CFC00FF;background-color:black;font-weight: bold; font-size:13px';
-pricempireCSSlog = 'color:#C27E00FF;background-color:black;font-weight: bold; font-size:13px';
+cspApiCSSlog = 'color:#C27E00FF;background-color:black;font-weight: bold; font-size:13px';
 tradeCompletedCSSlog = 'color:#FFFF;background-color:black;font-weight: bold; font-size:13px';
 steamOfferCSSlog = 'color:#0bba9a;background-color:black;font-weight: bold; font-size:13px';
 bannerCSSlog = 'color:red;background-color:black;font-weight: bold; font-size:55px';
@@ -154,17 +153,15 @@ const getPriceDataForLogs = (marketName, rollprice, event = 'other') => {
 	}
 	itemInfo.rollUSD = rollprice*rate;
 
-
 	if (isDoppler(marketName)) marketName = refactorDopplerNameForPE(marketName);
 
 	try{
 		price_obj = prices[marketName];
 		if (price_obj === undefined) {
-			console.log(`[PRICECHECK ERROR] (Not found in pricing object): ${marketName}`);
+			console.log(`[PRICECHECK ERROR]: ${itemName}`);
 			itemInfo.error = true;
-			return itemInfo;
+			return null;
 		}
-
 		let buff_usd;
 		let uu_usd;
 		let csf_usd;
@@ -190,22 +187,21 @@ const getPriceDataForLogs = (marketName, rollprice, event = 'other') => {
 		// UU
 		let realUUFVal = uu_usd / rate;
 		let uuVal = Math.floor(realUUFVal * 100) / 100;
-		const uuDelta = calcDelta(rollprice, uu_usd, rate);
+		const uuDelta  = calcDelta(rollprice, uu_usd, rate);
 
 		itemInfo.buffDelta = buffDelta;
 		itemInfo.csfDelta = csfDelta;
 		itemInfo.uuDelta = uuDelta;
 		itemInfo.liquidity = liq;
 		itemInfo.isInflated = is_inflated;
-		itemInfo.rollUSD = (rollprice*rate).toFixed(2);
+		itemInfo.rollUSD = Number((rollprice*rate).toFixed(2));
 		itemInfo.buff_usd = buff_usd;
 		itemInfo.csp_url = cspurl;
 		itemInfo.rate = rate;
 
 		return itemInfo;
 	} catch (e) {
-		console.log(`%[PRICECHECK ERROR] (Unexpected pricing error):`, errorCSSlog);
-		console.log(e)
+		console.log(`%cPRICECHECK ERROR: ${marketName}`, errorCSSlog);
 	}
 
 	return itemInfo;
@@ -231,7 +227,7 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 	}
 	// PRICING PROVIDERS
 	switch (provider) {
-		// DEFAULT PROVIDER PRICEMPIRE
+		// DEFAULT PROVIDER CSP
 		case 'cspricebase':
 			if (isDoppler(marketName))
 				marketName = refactorDopplerNameForPE(marketName);
@@ -242,7 +238,7 @@ const buffProfitEval = (marketName, rollprice, event = 'other') => {
 					if (price_obj.buff.isInflated) {
 						console.log(
 							`%c[WARNING] -> INFLATED ITEM`,
-							pricempireCSSlog,
+							cspApiCSSlog,
 						);
 					}
 					let buff_usd = price_obj.buff.price / 100;
@@ -269,7 +265,7 @@ async function loadCSP() {
 			if (response.error) {
 				console.log(
 					`%c[CS:PRICEBASE - ERROR] -> ${response.error}`,
-					pricempireCSSlog,
+					cspApiCSSlog,
 				);
 			} else {
 				provider = 'cspricebase';
@@ -277,16 +273,13 @@ async function loadCSP() {
 
 				console.log(
 					`%c[CS:PRICEBASE] -> Successfully loaded current price data`,
-					pricempireCSSlog,
+					cspApiCSSlog,
 				);
 				return prices;
 			}
 		},
 	);
 }
-
-// input: ★ Butterfly Knife | Doppler (Factory New) - Sapphire
-// csp needs: ★ Butterfly Knife | Sapphire (Factory New)
 
 function transformGemDopplerForCsp(marketName) {
 	const gems = ['Ruby', 'Sapphire', 'Emerald', 'Black Pearl'];
@@ -298,7 +291,6 @@ function transformGemDopplerForCsp(marketName) {
 		.replace(` - ${gem}`, '')
 		.replace(/Gamma Doppler|Doppler/, gem);
 }
-
 
 function getCSPUrl (marketName) {
 	let input = transformGemDopplerForCsp(marketName) // doppler gem check

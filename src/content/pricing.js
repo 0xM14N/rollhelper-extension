@@ -16,7 +16,6 @@ setInterval(() => {
 }, 200);
 
 function initializePricing() {
-    // if (isInitialized) return;
     isInitialized = true;
 
     const look4rates = setInterval(() => {
@@ -50,9 +49,15 @@ function initializePricing() {
 const watchPrices = setInterval(() => {
     if (!pricesLoaded && window.prices && Object.keys(window.prices || {}).length > 0) {
         pricesLoaded = true;
-        clearInterval(watchPrices);
-        // console.log('[RollHelper] Prices NOW loaded! Refreshing all overlays...');
         refreshAllOverlays();
+    }
+
+    if (pricesLoaded) {
+        const loadingCards = document.querySelectorAll('.buff-overlay .loading');
+        if (loadingCards.length > 0) {
+            // console.log(`[RollHelper] Found ${loadingCards.length} cards still loading, refreshing...`);
+            refreshAllOverlays();
+        }
     }
 }, 1000);
 
@@ -87,7 +92,6 @@ setInterval(() => {
 if (enablePricing) {
     initializePricing();
 }
-
 
 function maybeInject(node) {
     if (!enablePricing) return;
@@ -131,7 +135,6 @@ function observeContainer(container) {
 
     return observer;
 }
-
 
 function start() {
     const containerSelectors = [
@@ -181,20 +184,17 @@ function processExistingCards() {
 
 function refreshAllOverlays() {
     const cards = document.querySelectorAll('cw-csgo-market-item-card[data-pricing-injected="true"]');
-    // console.log(`[RollHelper] Refreshing ${cards.length} cards with pricing data`);
 
     cards.forEach(node => {
         const existingOverlay = node.querySelector(':scope > .buff-overlay');
         const existingHeading = node.querySelector(':scope > .marketname-overlay');
 
         if (existingOverlay) {
-            // console.log('[RollHelper] Removing old overlay from card');
             existingOverlay.remove();
         }
         if (existingHeading) existingHeading.remove();
 
         const data = getPricing(node);
-        // console.log('[RollHelper] Re-injecting with data:', data);
         injectOverlay(node, data);
     });
 }
@@ -376,8 +376,8 @@ function getPricing(item, include_pricing = "true") {
             break;
     }
 
-
     let rollPrice;
+
     if (!isStickered) {
         rollPrice =
             Math.floor(
@@ -397,7 +397,6 @@ function getPricing(item, include_pricing = "true") {
             ) / 100;
     }
 
-    // Check if prices object exists
     if (!window.prices || Object.keys(window.prices || {}).length === 0) {
         itemInfo.marketname = itemName;
         itemInfo.noPrices = true;
@@ -405,7 +404,6 @@ function getPricing(item, include_pricing = "true") {
         return itemInfo;
     }
 
-    // rate
     let rate;
     if (
         itemName.includes('Doppler') |
@@ -425,7 +423,7 @@ function getPricing(item, include_pricing = "true") {
     // PRICE
     if (phase !== undefined) itemName = itemName + ' - ' + phase;
 
-    // vanila check
+    // vanilla check
     if (!itemName.includes("|") && itemInfo.wear) {
         itemName =  itemName.replace(/\s*\([^)]*\)/, '');
     }
@@ -464,9 +462,19 @@ function getPricing(item, include_pricing = "true") {
     let csfVal = Math.floor(realCSFVal * 100) / 100;
     const csfDelta  = calcDelta(rollPrice, csf_usd, rate);
 
+    // uu delta
+    let realUUVal = uu_usd / rate;
+    let uuVal = Math.floor(realUUVal * 100) / 100;
+    let uuDelta  = calcDelta(rollPrice, uu_usd, rate);
+
+    if (isDoppler(itemName)) {
+        uuDelta = null;
+    }
+
     itemInfo.marketname = itemName;
     itemInfo.buffDelta = buffDelta;
     itemInfo.csfDelta = csfDelta;
+    itemInfo.uuDelta = uuDelta;
     itemInfo.liquidity = liq;
     itemInfo.isInflated = is_inflated;
 
@@ -478,6 +486,30 @@ function ensurePositioned(node) {
     if (style.position === 'static') {
         node.style.position = 'relative';
     }
+}
+
+function injectOverlay(node, data) {
+    const existingOverlay = node.querySelector(':scope > .buff-overlay');
+    const existingHeading = node.querySelector(':scope > .marketname-overlay');
+    if (existingOverlay) existingOverlay.remove();
+    if (existingHeading) existingHeading.remove();
+
+    ensurePositioned(node);
+
+    const { overlay, heading_overlay } = createOverlay(data);
+
+    if (heading_overlay) node.appendChild(heading_overlay);
+
+    node.appendChild(overlay);
+}
+
+function calcDelta(sitePrice, marketUsd, rate) {
+    if (!marketUsd || !rate || marketUsd <= 0) return null;
+
+    const marketCoins = marketUsd / rate;
+    const delta = (sitePrice / marketCoins - 1) * 100;
+
+    return Number(delta.toFixed(1));
 }
 
 function createOverlay(data) {
@@ -497,7 +529,7 @@ function createOverlay(data) {
 
     heading_overlay.innerHTML = `
         <div class="heading-overlay">
-            ${data.wear !== undefined ? data.wear : " - "}
+            copy
         </div>
     `;
 
@@ -505,18 +537,21 @@ function createOverlay(data) {
     if (data.noPrices) {
         overlay.innerHTML = `
         <div class="rollhelper-container">
-            <div>
-                 <div class="row delta loading"></div>
+            <div class="rollhelper-logo"></div>
+            <div class="price-column">
+                <div class="row delta loading"></div>
             </div>
-              <div class="rollhelper-logo"></div>
-         </div>
+            <div class="liq-column">
+                <div class="row liq">-</div>
+            </div>
+        </div>
         `;
 
         const img = document.createElement("img");
         img.src = chrome.runtime.getURL("assets/ico/csp.png");
         img.alt = "cs:pricebase";
-        img.width = 35;
-        img.height = 35;
+        img.width = 30;
+        img.height = 30;
         img.title = "View on CS:Pricebase"
 
         const link = document.createElement("a");
@@ -536,11 +571,14 @@ function createOverlay(data) {
     if (data.error) {
         overlay.innerHTML = `
         <div class="rollhelper-container">
-            <div>
-                 <div class="row delta buff neg">ERROR</div>
+            <div class="rollhelper-logo"></div>
+            <div class="price-column">
+                <div class="row delta buff neg">ERROR</div>
             </div>
-              <div class="rollhelper-logo"></div>
-         </div>
+            <div class="liq-column">
+                <div class="row liq">-</div>
+            </div>
+        </div>
         `;
 
         const img = document.createElement("img");
@@ -567,20 +605,21 @@ function createOverlay(data) {
     // main layout
     overlay.innerHTML = `
         <div class="rollhelper-container">
-            <div>
+            <div class="rollhelper-logo"></div>
+            <div class="price-column">
                 <div class="row delta buff ${data.buffDelta < 0 ? 'neg' : 'pos'}">
                     BUFF163: ${data.buffDelta > 0.5 ? `+${data.buffDelta}` : `${data.buffDelta}`}%
                 </div>
                 <div class="row delta csf ${data.csfDelta < 0 ? 'neg' : 'pos'}">
                     CSFLOAT: ${data.csfDelta > 0.5 ? `+${data.csfDelta}` : `${data.csfDelta}`}%
                 </div>
-                <div class="row liq">
-                    LIQ: ${data.liquidity}%
+                <div class="row delta csf ${data.uuDelta < 0 ? 'neg' : 'pos'}">
+                    YOUPIN: ${data.uuDelta > 0.5 ? `+${data.uuDelta}` : `${data.uuDelta}`}%
                 </div>
-                ${data.isInflated ? `<div class="inflated">Inflated</div>` : ``}
             </div>
-
-            <div class="rollhelper-logo"></div>
+            <div class="liq-column">
+                <div class="row liq">LIQ: ${data.liquidity}%</div>
+            </div>
         </div>
     `;
 
@@ -604,152 +643,143 @@ function createOverlay(data) {
     return { overlay, heading_overlay };
 }
 
-function injectOverlay(node, data) {
-    // Remove existing overlays if they exist (for refresh)
-    const existingOverlay = node.querySelector(':scope > .buff-overlay');
-    const existingHeading = node.querySelector(':scope > .marketname-overlay');
-    if (existingOverlay) existingOverlay.remove();
-    if (existingHeading) existingHeading.remove();
-
-    ensurePositioned(node);
-
-    const { overlay, heading_overlay } = createOverlay(data);
-
-    if (heading_overlay) node.appendChild(heading_overlay);
-
-    node.appendChild(overlay);
-}
-
-
-function calcDelta(sitePrice, marketUsd, rate) {
-    if (!marketUsd || !rate || marketUsd <= 0) return null;
-
-    const marketCoins = marketUsd / rate;
-    const delta = (sitePrice / marketCoins - 1) * 100;
-
-    return Number(delta.toFixed(1));
-}
-
 function injectStyles() {
     if (document.getElementById('rollhelper-extension-styles')) return;
 
     const style = document.createElement('style');
     style.id = 'rollhelper-extension-styles';
 
-
     style.textContent = `
-/* === RollHelper Overlay Layout === */
-
-.rollhelper-container {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    column-gap: 10px;
-    width: 100%;
-      pointer-events: auto;
-}
-
-/* Left column (pricing) */
-.rollhelper-prices {
-    display: grid;
-    row-gap: 2px;
-    justify-items: center;
-    text-align: center;
-}
-
-/* Right column (logo) */
-.rollhelper-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 28px;
-}
-
-/* Icon styling */
-.rollhelper-logo img {
-    display: block;
-    border-radius: 4px;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-}
-
-.rollhelper-logo a:hover img {
-    transform: scale(1.1);
-    opacity: 0.9;
-}
-
-/* === Heading Overlay === */
-
-.heading-overlay {
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
-    z-index: 999;
-    pointer-events: auto;
-    cursor: pointer;
-
-    font-size: 15px;
-    font-weight: bold;
-    text-align: center;
-
-    background: rgba(0,0,0,0);
-}
-
-/* === Bottom Overlay  #background: rgba(0,0,0,1); === */
-
-.buff-overlay {
-    position: absolute;
-    bottom: 6px;
-    left: 6px;
-    right: 6px;
-    z-index: 999;
-    pointer-events: none;
-
-    font-size: 13px;
- 
-    line-height: 1.2;
-   
-   background: rgba(0,0,0,1);
-    border-radius: 6px;
-    padding: 6px 8px;
-
-    display: grid;
-    grid-template-columns: 1fr;
-    row-gap: 2px;
-
-    justify-items: center;
-    text-align: center;
-}
-
-/* Rows */
-
-.buff-overlay .row {
-    white-space: nowrap;
-}
-
-/* Colors */
-
-.buff-overlay .pos {
-    color: #ff5c5c;
-}
-
-.buff-overlay .neg {
-    color: #3bd671;
-}
-
-.buff-overlay .liq {
-    color: #00d9ff;
-}
-
-.buff-overlay .inflated {
-    color: #ffa500;
-    font-weight: bold;
-}
-
-.buff-overlay .loading {
-    color: #ffeb3b;
-    font-style: italic;
-}
+    /* === RollHelper Overlay Layout === */
+    
+    .rollhelper-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+    
+    /* Top left - Price column */
+    .price-column {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        
+        display: grid;
+        row-gap: 2px;
+        justify-items: flex-start;
+        text-align: left;
+        
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        padding: 2px 5px;
+        pointer-events: auto;
+    }
+    
+    /* Middle bottom - Liquidity */
+    .liq-column {
+        position: absolute;
+        left: 50%;
+        bottom: 2px;
+        transform: translateX(-50%);
+        
+        display: flex;
+        align-items: center;
+        font-size: 10px;
+        
+        background-color: rgba(0, 0, 0, 0.7);
+        border-radius: 8px;
+        padding: 1px 3px;
+        pointer-events: auto;
+    }
+    
+    /* Bottom right - Logo */
+    .rollhelper-logo {
+        position: absolute;
+        bottom: 3px;
+        right: 3px;
+        
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+    }
+    
+    /* Icon styling */
+    .rollhelper-logo img {
+        display: block;
+        border-radius: 4px;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    
+    .rollhelper-logo a:hover img {
+        transform: scale(1.1);
+        opacity: 0.9;
+    }
+    
+    /* === Heading Overlay (Copy button) - Top right === */
+    
+    .heading-overlay {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 999;
+        pointer-events: auto;
+        cursor: pointer;
+        
+        font-size: 10px;
+        font-weight: bold;
+        text-align: center;
+        
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 8px;
+        padding: 1px 3px;
+    }
+    
+    /* === Top Overlay === */
+    
+    .buff-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        pointer-events: none;
+        
+        font-size: 11px;
+        line-height: 1.2;
+    }
+    
+    /* Rows */
+    
+    .buff-overlay .row {
+        white-space: nowrap;
+        text-shadow: 
+            -1px -1px 2px rgba(0,0,0,0.8),
+            1px -1px 2px rgba(0,0,0,0.8),
+            -1px 1px 2px rgba(0,0,0,0.8),
+            1px 1px 2px rgba(0,0,0,0.8);
+    }
+    
+    /* Colors */
+    
+    .buff-overlay .pos {
+        color: #ff5c5c;
+    }
+    
+    .buff-overlay .neg {
+        color: #3bd671;
+    }
+    
+    .buff-overlay .liq {
+        color: #00d9ff;
+    }
+    
+    .buff-overlay .loading {
+        color: #ffeb3b;
+        font-style: italic;
+    }
 `;
     document.head.appendChild(style);
 }

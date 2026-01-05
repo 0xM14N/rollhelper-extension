@@ -1,4 +1,4 @@
-let version = `1.2.1`;
+let version = `1.2.2`;
 
 console.log(
     `%cROLLHELPER | FREE  %cv${version}`,
@@ -13,6 +13,7 @@ console.log(
     vertical-align: super;
   `
 );
+
 console.log(
     `%c Need premium / custom features? → Discord: maintrades `,
     `
@@ -21,6 +22,8 @@ console.log(
     font-weight: bold;
   `
 );
+
+let STEAM_OFFER_ERROR_PRIORITY = 0;
 
 let pi;
 let rates;
@@ -33,12 +36,10 @@ let connected = false;
 let reconnectAttempts = 0;
 let messageQueue = [];
 let messageQueueLocked = true;
-const MAX_RECONNECT_ATTEMPTS = 9;
+
+const MAX_RECONNECT_ATTEMPTS = 20;
 const RECONNECT_BASE_DELAY = 60_000; // 60s
 const RECONNECT_MAX_DELAY = 82_000; // 82s
-
-let steam_access_token;
-let token_expiration;
 
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -48,6 +49,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse(false);
     }
     return true;
+});
+
+chrome.runtime.onMessage.addListener((msg) => {
+    if (msg.type === 'PRICES_UPDATED') {
+        console.log(
+            `%c[CS:PRICEBASE] -> Successfully refreshed current price data`,
+            cspApiCSSlog,
+        );
+        prices = msg.data;
+    }
 });
 
 const getActiveRollUrls = () => {
@@ -79,7 +90,6 @@ const fetchRates = async () => {
         });
 };
 
-
 const askForOpenWs = userID => {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(
@@ -96,6 +106,7 @@ const askForOpenWs = userID => {
 };
 
 const initRollhelper = async () => {
+    itemInfo = {};
     prices = {};
     rates = {};
 
@@ -107,14 +118,12 @@ const initRollhelper = async () => {
         rates = await fetchRates();
         await getCurrentSteamInvData(userID);
         await updateSettings();
-        await initConnection();
         prices = await loadCSP();
-
+        await initConnection();
     } catch (error) {
-        console.error('Error in initRollhelper:', error);
+        console.error('Error at initRollhelper:', error);
     }
 };
-
 
 const initConnection = async () => {
     let allowConnect = await askForOpenWs(userID);
@@ -126,7 +135,6 @@ const initConnection = async () => {
         setTimeout(initConnection, 12_000);
     }
 };
-
 
 function processMessageQueue() {
     if (messageQueue.length === 0) return;
@@ -151,7 +159,6 @@ function sp() {
 }
 
 function connectWSS() {
-
     if (socket != null) {
         try {
             socket.close();
@@ -191,7 +198,7 @@ function connectWSS() {
                 messageQueueLocked = false;
         }, 3500);
 
-        pI = setInterval(sp, 50000);
+        pI = setInterval(sp, 30_000);
     };
 
     socket.onmessage = async (event) => {
@@ -205,25 +212,28 @@ function connectWSS() {
 
         if (data?.payload?.data?.updateTrade) {
             let trade = data.payload.data.updateTrade.trade;
+
             if (trade.withdrawer != null && trade.status === 'JOINED') {
-                // DEPOSIT EVENT
+                // DEPOSIT-EVENT
                 if (trade.depositor.id === userID && depoAutoAccept) {
                     let marketName = trade.tradeItems[0].marketName;
                     let markup = trade.tradeItems[0].markupPercent;
                     let value = trade.tradeItems[0].value;
                     let withdrawerName = trade.withdrawer.displayName;
                     let withdrawerID = trade.withdrawer.id;
-                    let float = trade.avgPaintWear;
                     let ID = trade.tradeItems[0].itemVariant.id;
                     let itemID = trade.tradeItems[0].itemVariant.itemId;
                     let stickersArr = trade.tradeItems[0].stickers;
                     let basePrice = trade.tradeItems[0].itemVariant.value;
                     let icon_url = trade.tradeItems[0].itemVariant.iconUrl;
+                    const range = trade.avgPaintWearRange;
+                    let floatStr = range
+                        ? `${range.min} – ${range.max}`
+                        : 'N/A';
 
                     let addedStickersValue = 0;
                     let maxMarkup = 12;
                     let coinsToUsd;
-                    //acceptTrade(trade.id); ~ wss accept not working, using requests instead
                     let data = await fetchAcceptTrade(trade.id);
 
                     if (stickersArr.length > 0) {
@@ -242,7 +252,7 @@ function connectWSS() {
                     let trade_info = {
                         liquidity: pricing_data.liquidity,
                         marketname: marketName,
-                        float: float,
+                        float: floatStr,
                         value: value,
                         markup: markup,
                         maxMarkup: maxMarkup,
@@ -266,11 +276,11 @@ function connectWSS() {
                     );
                     console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
 
-                   // pushover_msg = `[DEPOSIT]\n${marketName}\n${value} coins | +${markup}%]`;
-
                     if (depoAlert) {
                         if (Pushover) {
-                            sendPushoverNotification(log_string);
+                            sendPushoverNotification(log_string, {
+                                priority: Number(depositNotifPriority)
+                            });
                         }
                         if (discord) {
                             sendWebHookDiscord(
@@ -283,6 +293,10 @@ function connectWSS() {
                 }
 
                 if (trade.depositor.id != userID) {
+                    const range = trade.avgPaintWearRange;
+                    let floatStr = range
+                        ? `${range.min} – ${range.max}`
+                        : 'N/A';
                     let marketName = trade.tradeItems[0].marketName;
                     let markup = trade.tradeItems[0].markupPercent;
                     let value = trade.tradeItems[0].value;
@@ -323,6 +337,7 @@ function connectWSS() {
                         uu_percent: pricing_data.uuDelta,
                         csp_url: pricing_data.cspurl,
                         rate: pricing_data.rate,
+                        float: floatStr
                     };
 
                     console.log(
@@ -332,12 +347,82 @@ function connectWSS() {
                 }
             }
 
-            // COMPLETED EVENT
+            // COMPLETED PROTECTED DEPOSIT EVENT
+            if (trade.status === 'COMPLETED_PROTECTED' &&
+                trade.withdrawer != null && trade.depositor.id === userID ) {
+                let marketName = trade.tradeItems[0].marketName;
+                let markup = trade.tradeItems[0].markupPercent;
+                let value = trade.tradeItems[0].value;
+                let withdrawerName = trade.withdrawer?.steamDisplayName ?? 'Unknown';
+                const range = trade.avgPaintWearRange;
+
+                let floatStr = range
+                    ? `${range.min} – ${range.max}`
+                    : 'N/A';
+
+                let withdrawerID = trade.withdrawer.id;
+                let ID = trade.tradeItems[0].itemVariant.id;
+                let itemID = trade.tradeItems[0].itemVariant.itemId;
+                let stickersArr = trade.tradeItems[0].stickers;
+                let basePrice = trade.tradeItems[0].itemVariant.value;
+                let icon_url = trade.tradeItems[0].itemVariant.iconUrl;
+
+                let addedStickersValue = 0;
+                let maxMarkup = 12;
+                let coinsToUsd;
+
+                const pricing_data = getPriceDataForLogs(marketName, value)
+
+                let trade_info = {
+                    liquidity: pricing_data.liquidity,
+                    marketname: marketName,
+                    markup: markup,
+                    maxMarkup: maxMarkup,
+                    coins_usd: pricing_data.rollUSD,
+                    buff163: pricing_data.buff_usd,
+                    buff_percent: pricing_data.buffDelta,
+                    csf_percent: pricing_data.csfDelta,
+                    uu_percent: pricing_data.uuDelta,
+                    csp_url: pricing_data.cspurl,
+                    rate: pricing_data.rate,
+                    float: floatStr
+                };
+
+                let log_string = `[DEPOSIT_COMPLETED_PROTECTED]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163]: ${trade_info.buff_percent > 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT]: ${trade_info.csf_percent > 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN]: ${trade_info.uu_percent > 0 ? "+" : ""}${trade_info.uu_percent}% (RATE: ${trade_info.rate})`
+
+                console.log(
+                    `%c${DateFormater(new Date())} | ${log_string}`,
+                    depositCSSlog,
+                );
+                console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
+
+                if (depoAlert) {
+                    if (Pushover) {
+                        sendPushoverNotification(log_string, {
+                            priority: Number(protectedNotifPriority)
+                        });
+                    }
+                    if (discord) {
+                        sendWebHookDiscord(
+                            Webhook,
+                            (webhookType = 'protectedDeposit'),
+                            trade_info,
+                        );
+                    }
+                }
+            }
+
+            // COMPLETED-EVENT
             if (trade.withdrawer != null && trade.status === 'COMPLETED') {
                 let marketName = trade.tradeItems[0].marketName;
                 let markup = trade.tradeItems[0].markupPercent;
                 let value = trade.tradeItems[0].value;
-                let float = trade.avgPaintWear;
+                const range = trade.avgPaintWearRange;
+
+                let floatStr = range
+                    ? `${range.min} – ${range.max}`
+                    : 'N/A';
+
                 let icon_url = trade.tradeItems[0].itemVariant.iconUrl;
 
                 let usd;
@@ -363,6 +448,7 @@ function connectWSS() {
 
                 const pricing_data = getPriceDataForLogs(marketName, value)
                 let trade_info = {
+                    value: value,
                     liquidity: pricing_data.liquidity,
                     marketname: marketName,
                     markup: markup,
@@ -374,6 +460,7 @@ function connectWSS() {
                     uu_percent: pricing_data.uuDelta,
                     csp_url: pricing_data.cspurl,
                     rate: pricing_data.rate,
+                    float: floatStr
                 };
 
                 let log_string = `[TRADE - COMPLETED]\n\t${marketName}\n\t${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`
@@ -381,10 +468,9 @@ function connectWSS() {
                     `%c${DateFormater(new Date())} | ${log_string}`,
                     tradeCompletedCSSlog,
                 );
-                // pushover_msg = `[TRADE - COMPLETED]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && completedAlert) {
-                    if (Pushover) sendPushoverNotification(log_string);
+                    if (Pushover) sendPushoverNotification(log_string, {priority: Number(completedNotifPriority) });
                     if (discord)
                         sendWebHookDiscord(
                             Webhook,
@@ -393,7 +479,7 @@ function connectWSS() {
                         );
                 }
             }
-            // COOLDOWN EVENT
+            // COOLDOWN-EVENT
             if (trade.withdrawer != null && trade.status === 'COOLDOWN') {
                 let marketName = trade.tradeItems[0].marketName;
                 let markup = trade.tradeItems[0].markupPercent;
@@ -415,7 +501,7 @@ function connectWSS() {
                 pushover_msg = `[TRADE - COOLDOWN]\n${marketName}\n${value} coins | +${markup}%`;
 
                 if (depoAlert && cooldownAlert) {
-                    if (Pushover) sendPushoverNotification(log_string);
+                    if (Pushover) sendPushoverNotification(log_string, {priority: Number(cooldownNotifPriority) });
                     if (discord)
                         sendWebHookDiscord(
                             Webhook,
@@ -425,7 +511,7 @@ function connectWSS() {
                 }
             }
 
-            // STEAM OFFER SENDING EVENT
+            // OFFERSEND-EVENT
             if (trade.withdrawer != null && trade.status === 'PROCESSING') {
                 if (trade.depositor.id == userID && sendSteamOffers) {
                     //send the steam offer here
@@ -473,17 +559,20 @@ function connectWSS() {
                             `%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer error (item not found)]`,
                             errorCSSlog,
                         );
-                        sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`);
+
+                        sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`, {
+                            priority: STEAM_OFFER_ERROR_PRIORITY
+                        });
                     }
                 }
 
                 // WITHDRAWACCEPTED-EVENT
                 if (trade.depositor.id != userID) {
                     let marketName = trade.tradeItems[0].marketName;
-                    let markup =
-                        trade.tradeItems[0].markupPercent;
+                    let markup = trade.tradeItems[0].markupPercent;
                     let value = trade.tradeItems[0].value;
-                    let float = trade.avgPaintWear;
+                    const range = trade.avgPaintWearRange;
+                    let floatStr = range ? `${range.min} – ${range.max}` : 'N/A';
                     let icon_url = trade.tradeItems[0].itemVariant.iconUrl;
                     let usd;
                     let profit;
@@ -516,7 +605,7 @@ function connectWSS() {
                     let trade_info = {
                         liquidity: pricing_data.liquidity,
                         marketname: marketName,
-                        float: float,
+                        float: floatStr,
                         value: value,
                         markup: markup,
                         maxMarkup: maxMarkup,
@@ -531,7 +620,6 @@ function connectWSS() {
                     };
 
                     let log_string = ` [WITHDRAW - ACCEPTED]\n${marketName}\n${value} coins | (${markup}%) | ${trade_info.coins_usd}$\n[LIQ]: ${trade_info.liquidity}% | [MAX MARKUP]: ${maxMarkup}%\n[BUFF163_%]: ${trade_info.buff_percent >= 0 ? "+" : ""}${trade_info.buff_percent}%\n[CSFLOAT_%]: ${trade_info.csf_percent >= 0 ? "+" : ""}${trade_info.csf_percent}%\n[YOUPIN_%]: ${trade_info.uu_percent >= 0 ? "+" : ""}${trade_info.uu_percent}%`
-
                     console.log(
                         `%c${DateFormater(new Date())} | ${log_string}`,
                         withdrawAcceptedCSSlog,
@@ -539,10 +627,8 @@ function connectWSS() {
 
                     console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, pricing_data.csp_url);
 
-                    // pushover_msg = `[WITHDRAW]\n${marketName}\n${value} coins | +${markup}% (MAX: ${maxMarkup}%)\n\n [STICKERS]:\n${formattedStickersText}`;
-
                     if (withdrawAlert == true) {
-                        if (Pushover) sendPushoverNotification(log_string);
+                        if (Pushover) sendPushoverNotification(log_string, {priority: Number(withdrawNotifPriority) });
                         if (discord)
                             sendWebHookDiscord(
                                 Webhook,
@@ -565,7 +651,7 @@ function connectWSS() {
 
     socket.onclose = (event) => {
         messageQueueLocked = true;
-        if (pi)  clearInterval(pI);
+        if (pi) clearInterval(pI);
 
         console.log(`WebSocket closed with code: ${event.code}, reason: ${event.reason}`);
         connected = false;

@@ -145,7 +145,7 @@ input:checked + .slider:before {
 .divider {
 	height: 1px;
 	background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-	margin: 14px 0;
+	margin: 1px 0;
 }
 
 /* Input Section */
@@ -159,6 +159,7 @@ input:checked + .slider:before {
 	color: #9aa0a6;
 	margin-bottom: 8px;
 	display: block;
+	text-align: center;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 }
@@ -192,6 +193,29 @@ input:checked + .slider:before {
 	gap: 10px;
 	margin-top: 14px;
 }
+
+.sessh {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.session-button {
+	width: 75%;
+	padding: 5px 5px;
+	border: none;
+	border-radius: 8px;
+	font-size: 8px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	position: relative;
+	overflow: hidden;
+}
+
 
 .modern-button {
 	width: 100%;
@@ -267,7 +291,7 @@ input:checked + .slider:before {
 .footer-text {
 	font-size: 10px;
 	color: #5f6368;
-	margin-bottom: 6px;
+	margin-bottom: 0px;
 	font-family: Consolas;
 }
 
@@ -379,8 +403,26 @@ body.settings-page {
 	margin-bottom: 6px;
 }
 
+.footer-text-csp2 {
+	font-size: 15px;
+	color: #dcdcdc;
+	margin-bottom: 6px;
+	text-align: center;
+}
+.footer-text-csp3 {
+	font-size: 11px;
+	color: #909090;
+	margin-bottom: 6px;
+	text-align: center;
+}
+
+.warning-ses {
+	font-size: 11px;
+	color: #909090;
+	margin-bottom: 6px;
+	text-align: center;
+}
+
 .csp-glow:hover {
 	color: #37f300;
 }
-
-

@@ -21,11 +21,8 @@ async function getUserID() {
 				reject(new Error(response.error));
 				return;
 			}
-
 			userID = response.data.currentUser.id;
-			steam_access_token = response.data.currentUser.steamAccessToken;
-			token_expiration = response.data.currentUser.steamAccessTokenExpiresAt;
-			resolve({ userID, token_expiration });
+			resolve({ userID });
 		});
 	});
 }
