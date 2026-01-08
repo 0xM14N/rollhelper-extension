@@ -29,6 +29,8 @@
 
 ### 🐛 Fixed
 - Minor issues with logs formatting / notifications
+- Connection from other domains (.gg / tr.com)
+- Protected event notification coins value fix
 
 ##  Table of Contents
 
