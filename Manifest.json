@@ -53,10 +53,13 @@
 	"permissions": ["storage", "tabs", "cookies", "scripting", "alarms"],
 	"host_permissions": [
 		"https://*.csgoroll.com/*",
+		"https://*.csgoroll.gg/*",
+		"https://*.csgorolltr.com/*",
 		"https://www.csgoroll.com/*",
 		"https://www.csgorolltr.com/*",
 		"https://www.csgoroll.gg/*",
-		"https://cspricebase.com/*"
+		"https://cspricebase.com/*",
+		"https://cspricebase.com/profile"
 	],
 	"web_accessible_resources": [
 		{

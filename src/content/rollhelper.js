@@ -374,6 +374,7 @@ function connectWSS() {
                 const pricing_data = getPriceDataForLogs(marketName, value)
 
                 let trade_info = {
+                    value: value,
                     liquidity: pricing_data.liquidity,
                     marketname: marketName,
                     markup: markup,
