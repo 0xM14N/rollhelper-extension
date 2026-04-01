@@ -1,5 +1,4 @@
-// const INGEST_URL = "https://cspricebase.com/api/ingest/trades";
-const INGEST_URL = "http://localhost:3000/api/ingest/trades";
+const INGEST_URL = "https://cspricebase.com/api/ingest/trades";
 const BATCH_SIZE = 25;
 const BATCH_INTERVAL_MS = 5000;
 const MAX_RETRIES = 5;
