@@ -10,7 +10,6 @@
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://chrome.google.com/)
 [![CSGORoll](https://img.shields.io/badge/CSGORoll-Trading-orange.svg)](https://csgoroll.com/r/RLHLPR)
 
-*Streamline your trading workflow with automation, real-time pricing, and with notifications*
 
 </div>
 
