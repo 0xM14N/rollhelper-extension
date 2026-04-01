@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
-	"description": "Trading automation extension for traders on CSGOROLL",
-	"version": "1.2.2",
+	"description": "Trading automation extension for cs2 traders",
+	"version": "1.3",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -22,6 +22,7 @@
 			],
 			"js": [
 				"src/content/rollhelper.js",
+				"src/content/ad-banner.js",
 				"src/Utils/utils.js",
 				"src/csgoroll-api/wsPayloads.js",
 				"src/csgoroll-api/api.js",
@@ -39,8 +40,7 @@
 				"https://www.csgoroll.gg/withdraw/csgo/p2p",
 				"https://www.csgorolltr.com/withdraw/csgo/p2p"
 			],
-			"js": ["src/content/pricing.js"],
-			"css": ["src/css/global.css"]
+			"js": ["src/content/pricing.js"]
 		}
 	],
 	"action": {
@@ -50,7 +50,7 @@
 			"16": "assets/ico/coin-ico.png"
 		}
 	},
-	"permissions": ["storage", "tabs", "cookies", "scripting", "alarms"],
+	"permissions": ["storage", "tabs", "cookies", "alarms", "scripting"],
 	"host_permissions": [
 		"https://*.csgoroll.com/*",
 		"https://*.csgoroll.gg/*",
@@ -59,7 +59,9 @@
 		"https://www.csgorolltr.com/*",
 		"https://www.csgoroll.gg/*",
 		"https://cspricebase.com/*",
-		"https://cspricebase.com/profile"
+		"https://cspricebase.com/profile",
+		"*://steamcommunity.com/profiles/*",
+		"http://localhost:3000/*"
 	],
 	"web_accessible_resources": [
 		{

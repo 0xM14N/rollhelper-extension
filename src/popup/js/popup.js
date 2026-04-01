@@ -14,7 +14,7 @@ sessionBtn.addEventListener("click", () => {
 			try {
 				await navigator.clipboard.writeText(response.session);
 				console.log('Session cookie copied to clipboard:', response.session);
-				alert('Session cookie copied!\nPLEASE HANDLE THIS COOKIE SAFELY!\nDO NOT HAND IT OVER TO UNTRUSTED SOURCES');
+				alert('Session cookie copied!\nKeep this cookie secure.\nNEVER SHARE it with untrusted sources.');
 			} catch (err) {
 				console.error('Failed to copy cookie:', err);
 			}

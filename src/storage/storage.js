@@ -22,7 +22,8 @@ const updateSettings = async () => {
 		{ protectedPushoverPriority },
 		{ wantReversalAlert },
 		{ wantProtectedAlert },
-
+		{ trackingApiKey },
+		{ enableTracking },
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -46,6 +47,8 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['protectedPushoverPriority']),
 		chrome.storage.sync.get(['wantReversalAlert']),
 		chrome.storage.sync.get(['wantProtectedAlert']),
+		chrome.storage.sync.get(['trackingApiKey']),
+		chrome.storage.sync.get(['enableTracking']),
 	]);
 
 	offerMessage = steamOfferMessage;
@@ -71,6 +74,9 @@ const updateSettings = async () => {
 	completedNotifPriority = completedPushoverPriority
 	reversalNotifPriority =  reversalPushoverPriority
 	protectedNotifPriority = protectedPushoverPriority
+
+	trackingKey = trackingApiKey
+	wantTracking = enableTracking
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

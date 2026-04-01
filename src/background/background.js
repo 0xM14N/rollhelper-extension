@@ -1,3 +1,12 @@
+importScripts(
+	'../tracking/signer.js',
+	'../tracking/queue.js',
+	'../tracking/normalizer.js',
+	'../tracking/tracker.js'
+);
+
+tradeTracker.init();
+
 activeWs = new Set();
 
 const MAX_STEAM_INV_RETRIES = 10;
@@ -23,6 +32,56 @@ async function getSessionCookie() {
 
 	return sessionCookie || null;
 }
+
+//todo: rework - more lightweight endpoint to grab the data (dont open tab? fetch?)
+async function getSteamData() {
+	return new Promise((resolve, reject) => {
+		chrome.tabs.create({ url: 'https://steamcommunity.com/', active: false }, function (tab) {
+			if (!tab || !tab.id) {
+				reject('Failed to create Steam tab');
+				return;
+			}
+
+			chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+				if (tabId === tab.id && info.status === 'complete') {
+					chrome.tabs.onUpdated.removeListener(listener);
+
+					chrome.scripting.executeScript({
+						target: { tabId: tab.id },
+						func: () => {
+							const body = document.documentElement.innerHTML;
+
+							const steamIdMatch = /g_steamID = "\d+";/.exec(body);
+							const steamId = steamIdMatch?.at(0).replace('g_steamID = ', '').replaceAll('"', '').replaceAll(';', '');
+							const webAPITokenMatch = /data-loyalty_webapi_token="&quot;([a-zA-Z0-9_.-]+)&quot;"/.exec(body);
+							const token = webAPITokenMatch[1];
+							return {
+								token,
+								steamId,
+							}
+						}
+					}, (results) => {
+						// console.log(results)
+						if (chrome.runtime.lastError) {
+							reject(new Error(chrome.runtime.lastError.message));
+							return;
+						}
+
+						const result = results?.[0]?.result;
+						if (!result || !result.token || !result.steamId) {
+							reject(new Error('Failed to parse steam data'));
+							return;
+						}
+
+						chrome.tabs.remove(tab.id);
+						resolve(result);
+					});
+				}
+			});
+		});
+	});
+}
+
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if (request.type === 'getSessionCookie') {
@@ -142,6 +201,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		return true;
 	}
 
+	// todo: optimize the query only for neccessary data
 	if (request.action === "getUserID") {
 		getCsgorollCookies().then(cookieString => {
 			fetch(request.domain, {
@@ -439,7 +499,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.runtime.onInstalled.addListener(details => {
 	if (details.reason === 'install') {
-		// Initialize default storage values
 		chrome.storage.sync.set(
 			{
 				steamOfferMessage: null,
@@ -467,6 +526,54 @@ chrome.runtime.onInstalled.addListener(details => {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	switch (msg.type) {
+		case "updateAccessToken":
+			(async () => {
+				try{
+					let { token, steamId } = await getSteamData();
+					if (!token || !steamId) {
+						console.log('NO TOKEN OR STEAMID - Sending error response');
+						sendResponse({ error: "Failed to get steam data. Are you logged in steam?" });
+						return;
+					}
+					const cookieString = await getCsgorollCookies();
+
+					const res = await fetch(msg.domain, {
+						method: 'POST',
+						headers: {
+							Accept: 'application/json, text/plain, */*',
+							'Content-Type': 'application/json',
+							'Cookie': cookieString,
+							'Origin': 'https://www.csgoroll.com',
+							'Referer': 'https://www.csgoroll.com/'
+						},
+						credentials: 'include',
+						body: JSON.stringify({
+							query: `
+							  mutation changeSteamAccessToken($input: UpdateSteamAccessTokenInput!) {
+								updateSteamAccessToken(input: $input) {
+								  success
+								  __typename
+								}
+							  }`,
+							variables: {
+								input: {
+									steamId: steamId,
+									accessToken: token
+								}
+							},
+							operationName: "changeSteamAccessToken"
+						})
+					});
+
+					const data = await res.json();
+					sendResponse(data);
+
+				}	catch (error) {
+					console.log(error)
+					sendResponse({ error: error.message });
+				}
+			})()
+
 		case 'getActiveRollUrls':
 			chrome.tabs.query({}, function (tabs) {
 				csgorollActiveUrls = 0;
@@ -585,6 +692,26 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			activeWs.add(id);
 			sendResponse(true);
 			break;
+
+		case 'track_trade':
+			(async () => {
+				try {
+					const storage = await chrome.storage.local.get('pricing_data');
+					await tradeTracker.trackEvent(msg.payload, storage.pricing_data || null);
+					sendResponse({ ok: true });
+				} catch (err) {
+					console.error('[TradeTracker] Error handling track_trade:', err);
+					sendResponse({ ok: false, error: err.message });
+				}
+			})();
+			return true;
+
+		case 'get_tracker_status':
+			(async () => {
+				const status = await tradeTracker.getStatus();
+				sendResponse(status);
+			})();
+			return true;
 	}
 });
 

@@ -16,21 +16,14 @@
 
 # Recent Changes
 
-## v1.2.2 - 2026-01-05
+## v1.3 - 2026-04-01
 
-### ✨ Added
-- Session Cookie extractor (main popup)
-- Pushover notifications priority settings for trade events
-- Added youpin prices into the pricing overlay
-
-### 🔧 Changed
-- Improved in-site pricing overlay for better visibility
+###  Added
+- Automatic Steam token updater
+- Always-on store (Your items appear always online - without any extra activity)
+- Added analytics dashboard for cspricebase.com (create tracking key to track trades)
 
 
-### 🐛 Fixed
-- Minor issues with logs formatting / notifications
-- Connection from other domains (.gg / tr.com)
-- Protected event notification coins value fix
 
 ##  Table of Contents
 
@@ -47,7 +40,7 @@
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 **RollHelper** is a Chrome extension designed specifically for CS2 traders on CSGORoll. It automates tedious tasks, provides real-time market pricing, and keeps you informed of all trading events through multiple notification channels.
 
@@ -55,17 +48,17 @@ Whether you're a casual trader or running a high-volume operation, RollHelper st
 
 ### Why RollHelper?
 
-- **⚡ Lightning-Fast Automation** - Accept deposits and send Steam offers instantly
-- **💰 Real-Time Pricing** - Live market data from CSPRICEBASE API
-- **🔔 Multi-Channel Notifications** - Discord & Pushover integration
-- **📊 Detailed Analytics** - Console logs with pricing insights
-- **🎨 Clean Interface** - Non-intrusive UI that enhances CSGORoll
+- ** Lightning-Fast Automation** - Accept deposits and send Steam offers instantly
+- ** Real-Time Pricing** - Live market data from CSPRICEBASE API
+- ** Multi-Channel Notifications** - Discord & Pushover integration
+- ** Detailed Analytics** - Console logs with pricing insights
+- ** Clean Interface** - Non-intrusive UI that enhances CSGORoll
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-### 🤖 Trading Automation
+###  Trading Automation
 
 #### Automatic Deposit Accept
 Instantly accept incoming deposits without manual intervention. Perfect for high-volume traders who need to process trades quickly.
@@ -104,11 +97,11 @@ Stay informed of all trading activities through:
 - Custom sounds and alerts
 
 #### Supported Events
-- ✅ **Deposits** - When items are deposited to your account
-- 📤 **Withdrawals** - When you withdraw items
-- ⏰ **Cooldowns** - Trade cooldown notifications
+-  **Deposits** - When items are deposited to your account
+-  **Withdrawals** - When you withdraw items
+-  **Cooldowns** - Trade cooldown notifications
 
-### 🔍 Developer Tools Integration
+###  Developer Tools Integration
 
 #### Console Logging System
 Detailed trade information logged to browser console:
@@ -123,7 +116,7 @@ Detailed trade information logged to browser console:
 
 
 
-## 📦 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -191,7 +184,7 @@ Access settings by clicking the RollHelper icon in your toolbar:
   - Toggle pricing displays
 ---
 
-## 💰 Pricing Integration (CSPRICEBASE)
+##  Pricing Integration (CSPRICEBASE)
 
 RollHelper's pricing features are powered by [CSPRICEBASE.com](https://cspricebase.com), providing accurate, real-time market data across multiple CS2 trading platforms.
 
@@ -360,7 +353,7 @@ A: Set Developer Tools to "Info" level to filter CSGORoll errors. If RollHelper 
 
 ---
 
-## 🆘 Support
+##  Support
 
 ### Getting Help
 
