@@ -3,108 +3,313 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>RollHELPER</title>
+	<title>ROLLHELPER</title>
 	<link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
-<!-- Header -->
-<div class="header-section">
-	<a href="https://csgoroll.com/r/RLHLPR" target="_blank">
-		<img
-				src="../../../assets/ico/rollHelper.png"
-				alt="RollHelper Logo"
-				width="110"
-				height="40"
-		/>
-	</a>
-	<div class="divider" style=""></div>
-</div>
-
-<!-- Main Card -->
-<div class="card">
-	<!-- Auto Accept Toggle -->
-	<div class="toggle-section">
-		<div class="toggle-wrapper">
-			<span class="toggle-label-main">Auto Accept</span>
-			<label class="switch">
-				<input type="checkbox" id="depoSwitch" />
-				<span class="slider"></span>
-			</label>
+<div class="layout">
+	<!-- Sidebar -->
+	<div class="sidebar">
+		<div class="sidebar-logo">
+			<a href="https://csgoroll.com/r/RLHLPR" target="_blank">
+				<img src="../../../assets/ico/rollHelper.png" alt="RollHelper" width="100" height="36" />
+			</a>
 		</div>
-	</div>
 
-	<div class="divider"></div>
-
-	<!-- Send Offers Toggle -->
-	<div class="toggle-section">
-		<div class="toggle-wrapper">
-			<span class="toggle-label">Send Offers</span>
-			<label class="switch">
-				<input type="checkbox" id="sendOfferSwitch" />
-				<span class="slider"></span>
-			</label>
-		</div>
-	</div>
-
-	<div class="divider"></div>
-
-	<!-- Steam Offer Message Input -->
-	<div class="input-section">
-		<label class="input-label" for="steamOfferMessageInput">
-			Steam Offer Message
-		</label>
-		<input
-				type="text"
-				id="steamOfferMessageInput"
-				class="modern-input"
-				placeholder="Enter your message..."
-		/>
-	</div>
-
-	<!-- Action Buttons -->
-	<div class="button-group">
-		<a href="dashboard.html" style="text-decoration: none;">
-			<button class="modern-button button-secondary">
-				<span>DASHBOARD</span>
-			</button>
-		</a>
-		<a href="settings.html" style="text-decoration: none;">
-			<button class="modern-button button-secondary">
+		<nav class="sidebar-nav">
+			<a class="nav-item active" data-page="trades">
+				<span class="nav-icon">&#9654;</span>
+				<span>Trades</span>
+			</a>
+			<a class="nav-item" data-page="deposits">
+				<span class="nav-icon">&#9660;</span>
+				<span>Deposits</span>
+			</a>
+			<a class="nav-item" data-page="notifications">
+				<span class="nav-icon">&#9881;</span>
 				<span>Notifications</span>
-			</button>
-		</a>
-		<a href="pricing.html" style="text-decoration: none;">
-			<button class="modern-button button-secondary">
+			</a>
+			<a class="nav-item" data-page="dashboard">
+				<span class="nav-icon">&#9632;</span>
+				<span>Dashboard</span>
+			</a>
+			<a class="nav-item" data-page="pricing">
+				<span class="nav-icon">&#36;</span>
 				<span>Pricing</span>
-			</button>
-		</a>
-		<div class="sessh">
-			<button id="copy-session-btn" class="session-button button-secondary">
-				<span>Copy session cookie</span>
-			</button>
-<!--			<p class="warning-ses">-->
-<!--				(WARNING: Do not share)-->
-<!--			</p>-->
+			</a>
+		</nav>
+
+		<div class="sidebar-footer">
+			<button id="copy-session-btn" class="session-button">Copy Session</button>
+			<div class="footer-credit">
+				<span class="footer-text">Created by</span>
+				<a href="https://github.com/0xM14N" target="_blank">
+					<button class="button" data-text="Awesome">
+						<span class="actual-text">&nbsp;MAINTRADES&nbsp;</span>
+						<span aria-hidden="true" class="hover-text">&nbsp;MAINTRADES&nbsp;</span>
+					</button>
+				</a>
+			</div>
+			<span class="footer-version">v1.4</span>
+		</div>
+	</div>
+
+	<!-- Content Area -->
+	<div class="content">
+
+		<!-- PAGE: Trades -->
+		<div class="page active" id="page-trades">
+			<div class="section-title">CSGORoll Trade Automation</div>
+			<div class="controls-grid">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Deposit Accept</span>
+					<label class="switch switch-sm"><input type="checkbox" id="depoSwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact">
+					<span class="toggle-label">Auto Relist</span>
+					<label class="switch switch-sm"><input type="checkbox" id="autoRelistSwitch" /><span class="slider"></span></label>
+				</div>
+			</div>
+			<div class="section-title">Steam Trade Automation</div>
+			<div class="controls-grid">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Send Offers</span>
+					<label class="switch switch-sm"><input type="checkbox" id="sendOfferSwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact">
+					<span class="toggle-label">Auto Cancel</span>
+					<label class="switch switch-sm"><input type="checkbox" id="autoCancelSwitch" /><span class="slider"></span></label>
+				</div>
+			</div>
+			<div class="input-row">
+				<label class="input-label" for="steamOfferMessageInput">Steam Offer Message</label>
+				<div class="input-with-button">
+					<input type="text" id="steamOfferMessageInput" class="modern-input" placeholder="Enter your message..." />
+				</div>
+			</div>
+
+			<div class="promo-section">
+				<span class="promo-label">Looking to sell skins?</span>
+				<div class="promo-cards">
+					<div class="promo-card promo-personal">
+						<span class="promo-tag">Best Rate</span>
+						<span class="promo-title">Instant Buyouts — 97% Buff</span>
+						<span class="promo-handle">maintrades</span>
+						<span class="promo-detail">DM on Discord</span>
+					</div>
+					<a href="https://skinscashout.com/?ref=RLHLPR" target="_blank" class="promo-card promo-site">
+						<span class="promo-tag">Automated</span>
+						<span class="promo-title">SkinsCashout.com</span>
+						<span class="promo-detail">+2.5% bonus with code RLHLPR</span>
+					</a>
+				</div>
+			</div>
+
+			<button class="save-btn full-width" id="saveSettings"><span>Save</span></button>
 		</div>
 
-		<button class="modern-button button-primary" id="saveSettings">
-			<span>Save Changes</span>
-		</button>
+		<!-- PAGE: Deposits -->
+		<div class="page" id="page-deposits">
+			<div class="deposit-card">
+				<div class="deposit-card-header">
+					<span class="deposit-card-title">Craft Markup Decay</span>
+					<label class="switch switch-sm"><input type="checkbox" id="markupDecaySwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="deposit-card-body">
+					<div class="deposit-field">
+						<span class="deposit-field-label">Drop %</span>
+						<input type="number" id="decayPercent" class="deposit-input" min="1" value="10" />
+					</div>
+					<div class="deposit-field">
+						<span class="deposit-field-label">Every (h)</span>
+						<input type="number" id="decayInterval" class="deposit-input" min="1" value="4" step="any" />
+					</div>
+					<div class="deposit-field">
+						<span class="deposit-field-label">Floor %</span>
+						<input type="number" id="decayFloor" class="deposit-input" min="1" max="90" value="50" />
+					</div>
+				</div>
+			</div>
+
+			<div class="deposit-card">
+				<div class="deposit-card-header">
+					<span class="deposit-card-title">Item Markup Decay</span>
+					<label class="switch switch-sm"><input type="checkbox" id="itemDecaySwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="deposit-card-body">
+					<div class="deposit-field">
+						<span class="deposit-field-label">Drop %</span>
+						<input type="number" id="itemDecayPercent" class="deposit-input" min="1" value="1" />
+					</div>
+					<div class="deposit-field">
+						<span class="deposit-field-label">Every (h)</span>
+						<input type="number" id="itemDecayInterval" class="deposit-input" min="1" value="6" step="any" />
+					</div>
+					<div class="deposit-field">
+						<span class="deposit-field-label">Floor %</span>
+						<input type="number" id="itemDecayFloor" class="deposit-input" min="1" max="90" value="75" />
+					</div>
+				</div>
+			</div>
+
+			<div class="deposit-card">
+				<div class="deposit-card-header">
+					<span class="deposit-card-title">Deposit Safeguard</span>
+					<label class="switch switch-sm"><input type="checkbox" id="safeguardSwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="deposit-card-body">
+					<div class="deposit-field">
+						<span class="deposit-field-label">Threshold %</span>
+						<input type="number" id="safeguardThreshold" class="deposit-input" min="1" max="50" value="5" />
+					</div>
+					<div class="deposit-field deposit-field-wide">
+						<span class="deposit-field-label">Market</span>
+						<select id="safeguardMarket" class="deposit-input deposit-select">
+							<option value="buff">Buff</option>
+							<option value="csfloat">CSFloat</option>
+							<option value="youpin">Youpin</option>
+							<option value="lowest">Lowest</option>
+						</select>
+					</div>
+				</div>
+			</div>
+
+			<button class="save-btn full-width" id="saveDeposits"><span>Save</span></button>
+		</div>
+
+		<!-- PAGE: Notifications -->
+		<div class="page" id="page-notifications">
+			<div class="section-title">Notifications</div>
+
+			<div class="notif-top-row">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Pushover</span>
+					<label class="switch switch-sm"><input type="checkbox" id="notifySwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact">
+					<span class="toggle-label">Discord</span>
+					<label class="switch switch-sm"><input type="checkbox" id="dcNotifySwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact emergency">
+					<span class="toggle-label emergency-label">Emergency</span>
+					<label class="switch switch-sm switch-emergency"><input type="checkbox" id="emergencySwitch" /><span class="slider"></span></label>
+				</div>
+			</div>
+
+			<div class="section-title">Alert Types</div>
+			<div class="alert-grid">
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="depoAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Deposit</span>
+					<input type="number" id="depoPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="withdrawAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Withdraw</span>
+					<input type="number" id="withdrawPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="completedAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Completed</span>
+					<input type="number" id="completedPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="cooldownAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Cooldown</span>
+					<input type="number" id="cooldownPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="protectedAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Protected</span>
+					<input type="number" id="protectedPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="reversalAlert" disabled /><span class="slider"></span></label>
+					<span class="alert-label">Reversal</span>
+					<input type="number" id="reversalPriority" class="priority-input" min="-2" max="2" value="0" disabled />
+				</div>
+			</div>
+
+			<div class="section-title">Credentials</div>
+			<div class="notif-inputs">
+				<div class="labeled-input">
+					<label class="input-label">Discord Webhook</label>
+					<input type="text" placeholder="URL" class="modern-input" id="discordInput" />
+				</div>
+				<div class="labeled-input">
+					<label class="input-label">Pushover User Key</label>
+					<input type="text" placeholder="Key" class="modern-input" id="userkeyInput" />
+				</div>
+				<div class="labeled-input">
+					<label class="input-label">Pushover Token</label>
+					<input type="text" placeholder="Token" class="modern-input" id="tokenInput" />
+				</div>
+			</div>
+			<span class="priority-hint">Priority inputs: -2 (min) to 2 (max)</span>
+			<button class="save-btn full-width" id="saveNotifications"><span>Save</span></button>
+		</div>
+
+		<!-- PAGE: Dashboard -->
+		<div class="page page-centered" id="page-dashboard">
+			<div class="section-title">Trade Tracking</div>
+			<div class="page-desc">Track your csgoroll trades into your personal dashboard on CSPricebase.</div>
+
+			<div class="page-form">
+				<div class="input-row">
+					<label class="input-label">CSPricebase Tracking Key</label>
+					<div class="input-with-button">
+						<input type="text" placeholder="TRACKING-KEY" class="modern-input" id="cspTrackingKey" />
+						<a href="https://cspricebase.com/trades/setup" target="_blank" class="icon-link">
+							<img src="../../../assets/ico/csp.png" alt="CSP" height="26" width="26" />
+						</a>
+					</div>
+				</div>
+
+				<div class="toggle-card compact">
+					<span class="toggle-label">Track Trades</span>
+					<label class="switch switch-sm"><input type="checkbox" id="trackingSwitch" /><span class="slider"></span></label>
+				</div>
+
+			</div>
+
+			<div class="csp-promo">
+				<span>Get your free tracking key at</span>
+				<a href="https://cspricebase.com/trades/setup" target="_blank" class="csp-glow">CSPRICEBASE.COM</a>
+			</div>
+			<button class="save-btn full-width" id="saveTracking"><span>Save</span></button>
+		</div>
+
+		<!-- PAGE: Pricing -->
+		<div class="page page-centered" id="page-pricing">
+			<div class="section-title">Pricing Overlay</div>
+			<div class="page-desc">Live buff163 / csfloat price comparisons on-site, in notifications, and logs.</div>
+
+			<div class="page-form">
+				<div class="input-row">
+					<label class="input-label">CSPricebase API Key</label>
+					<div class="input-with-button">
+						<input type="text" placeholder="API-KEY" class="modern-input" id="cspApiKey" />
+						<a href="https://cspricebase.com/profile" target="_blank" class="icon-link">
+							<img src="../../../assets/ico/csp.png" alt="CSP" height="26" width="26" />
+						</a>
+					</div>
+				</div>
+
+				<div class="toggle-card compact">
+					<span class="toggle-label">Pricing Overlay</span>
+					<label class="switch switch-sm"><input type="checkbox" id="pricingOverlay" /><span class="slider"></span></label>
+				</div>
+
+			</div>
+
+			<div class="csp-promo">
+				<span>Get your api key at</span>
+				<a href="https://cspricebase.com/profile" target="_blank" class="csp-glow">CSPRICEBASE.COM</a>
+			</div>
+			<button class="save-btn full-width" id="savePricing"><span>Save</span></button>
+		</div>
+
 	</div>
-</div>
-
-
-<!-- Footer -->
-<div class="footer">
-	<p class="footer-text">Created by</p>
-	<a href="https://github.com/0xM14N" target="_blank">
-		<button class="button" data-text="Awesome">
-			<span class="actual-text">&nbsp;MAINTRADES&nbsp;</span>
-			<span aria-hidden="true" class="hover-text"
-			>&nbsp;MAINTRADES&nbsp;</span
-			>
-		</button>
-	</a>
 </div>
 
 <script src="../js/popup.js"></script>

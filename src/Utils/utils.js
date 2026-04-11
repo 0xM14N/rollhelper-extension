@@ -9,16 +9,61 @@ bannerCSSlog = 'color:red;background-color:black;font-weight: bold; font-size:55
 cspCSSlog = 'color:#7CFC00FF;background:black;font-weight:bold;font-size:10px';
 
 const sendSteamTradeOffer = (assetID, tradeLink, offerMessage) => {
-	chrome.runtime.sendMessage(
-		{
-			type: 'sendSteamOffer',
-			assetID: assetID,
-			tradeLink: tradeLink,
-			offerMsg: offerMessage,
-		},
-		response => {},
-	);
+	return new Promise((resolve, reject) => {
+		chrome.runtime.sendMessage(
+			{
+				type: 'sendSteamOffer',
+				assetID: assetID,
+				tradeLink: tradeLink,
+				offerMsg: offerMessage,
+			},
+			response => {
+				if (!response) {
+					reject(new Error('No response from background script'));
+					return;
+				}
+				if (response.error) {
+					reject(new Error(response.error));
+					return;
+				}
+				resolve(response.tradeofferid);
+			},
+		);
+	});
 };
+
+const cancelSteamTradeOffer = (tradeofferid) => {
+	return new Promise((resolve, reject) => {
+		chrome.runtime.sendMessage(
+			{ type: 'cancelSteamOffer', tradeofferid },
+			response => {
+				if (!response) {
+					reject(new Error('No response from background script'));
+					return;
+				}
+				if (response.error) {
+					reject(new Error(response.error));
+					return;
+				}
+				resolve(true);
+			},
+		);
+	});
+};
+
+async function savePendingOffer(csgorollTradeId, steamOfferId) {
+	const { pendingSteamOffers = {} } = await chrome.storage.local.get('pendingSteamOffers');
+	pendingSteamOffers[csgorollTradeId] = steamOfferId;
+	await chrome.storage.local.set({ pendingSteamOffers });
+}
+
+async function removePendingOffer(csgorollTradeId) {
+	const { pendingSteamOffers = {} } = await chrome.storage.local.get('pendingSteamOffers');
+	const steamOfferId = pendingSteamOffers[csgorollTradeId];
+	delete pendingSteamOffers[csgorollTradeId];
+	await chrome.storage.local.set({ pendingSteamOffers });
+	return steamOfferId;
+}
 
 let DateFormater = date =>
 	'[' +

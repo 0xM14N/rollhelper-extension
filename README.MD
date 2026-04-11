@@ -1,432 +1,295 @@
-# RollHelper - Trading extension for csgoroll
-
 <div align="center">
 
+<!-- Replace with your hero image -->
 ![RollHelper Banner](assets/showcase/showcase2.png)
 
-**The Chrome extension for CS2 traders on CSGORoll**
+# RollHelper
+
+**Open-source trading automation for CSGORoll**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://chrome.google.com/)
-[![CSGORoll](https://img.shields.io/badge/CSGORoll-Trading-orange.svg)](https://csgoroll.com/r/RLHLPR)
-
+[![Chrome Extension](https://img.shields.io/badge/Platform-Chrome-yellow.svg)](https://chrome.google.com/)
+[![CSGORoll](https://img.shields.io/badge/CSGORoll-Referral-orange.svg)](https://csgoroll.com/r/RLHLPR)
+[![CSPricebase](https://img.shields.io/badge/Powered%20by-CSPricebase-brightgreen.svg)](https://cspricebase.com)
 
 </div>
 
-# Recent Changes
+---
 
-## v1.3 - 2026-04-01
+RollHelper is a Chrome extension that automates deposit handling, trade management, and pricing lookups on CSGORoll. It is built for CS2 traders who want faster execution, real-time market data, and reliable notifications.
 
-###  Added
+The extension connects to [CSPricebase](https://cspricebase.com) for live pricing across Buff163, CSFloat, and Youpin, and supports trade tracking through a personal dashboard.
+
+---
+
+## Changelog
+
+### v1.4 — 2026-04-11
+
+**Added**
+- Auto-relist deposits on cancel, expiry, or cooldown (with 35-min cooldown delay)
+- Markup decay system — automatically reduces listing markup over time with configurable drop rate, interval, and floor (separate settings for craft and item-tier deposits)
+- Deposit safeguard — blocks auto-accept when item value is underpriced vs. market by a configurable threshold (supports Buff, CSFloat, Youpin, or lowest-of-all)
+- Retry with incremental backoff on all critical API calls (accept, relist, Steam offer, cancel)
+- Redesigned popup with dedicated Trades, Deposits, Notifications, Dashboard, and Pricing tabs
+
+**Fixed**
+- Steam offer cancel 500 errors handled gracefully (already-inactive offers)
+- User-initiated cancellations no longer trigger auto-relist
+
+### v1.3 — 2026-04-01
+
+**Added**
 - Automatic Steam token updater
-- Always-on store (Your items appear always online - without any extra activity)
-- Added analytics dashboard for cspricebase.com (create tracking key to track trades)
-
-
-
-##  Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Pricing Integration](#-pricing-integration-cspricebase)
-- [Notifications Setup](#-notifications-setup)
-- [Usage Guide](#-usage-guide)
-- [FAQ](#-faq)
-- [Support](#-support)
-- [License](#-license)
+- Always-on store (items appear online without manual activity)
+- Trade tracking dashboard via CSPricebase
 
 ---
 
-##  Overview
+## Table of Contents
 
-**RollHelper** is a Chrome extension designed specifically for CS2 traders on CSGORoll. It automates tedious tasks, provides real-time market pricing, and keeps you informed of all trading events through multiple notification channels.
-
-Whether you're a casual trader or running a high-volume operation, RollHelper streamlines your workflow and helps you make informed trading decisions.
-
-### Why RollHelper?
-
-- ** Lightning-Fast Automation** - Accept deposits and send Steam offers instantly
-- ** Real-Time Pricing** - Live market data from CSPRICEBASE API
-- ** Multi-Channel Notifications** - Discord & Pushover integration
-- ** Detailed Analytics** - Console logs with pricing insights
-- ** Clean Interface** - Non-intrusive UI that enhances CSGORoll
+- [Features](#features)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Pricing Integration](#pricing-integration)
+- [Trade Tracking](#trade-tracking)
+- [Notifications](#notifications)
+- [Console Logging](#console-logging)
+- [FAQ](#faq)
+- [Custom Development](#custom-development)
+- [License](#license)
 
 ---
 
-##  Key Features
+## Features
 
-###  Trading Automation
+### Trade Automation
 
-#### Automatic Deposit Accept
-Instantly accept incoming deposits without manual intervention. Perfect for high-volume traders who need to process trades quickly.
+| Feature                        | Description                                                                        |
+|--------------------------------|------------------------------------------------------------------------------------|
+| **Deposit Auto-Accept**        | Instantly accept incoming deposits. Optional safeguard blocks undervalued items.   |
+| **Auto-Relist**                | Re-lists deposits that fail, get cancelled by withdrawer, expire, or hit cooldown. |
+| **Steam Offer Sending**        | Sends Steam trade offers automatically with configurable message templates.        |
+| **Steam Offer Auto-Cancel**    | Cancels pending Steam offers when the CSGORoll trade is cancelled.                 |
+| **Steam Webapi Token Updater** | Automatically updates expired steam webapi token on background                     |
 
-#### Smart Steam Offer Sending
-Automatically generates and sends Steam trade offers with:
-- Optional custom messages for personalization
-- Integration with CSGOTrader extension for seamless sending
-- Intelligent item selection and verification
+### Markup Decay
 
-### Pricing System
+Automatically reduces deposit markup over time. Two independent profiles:
 
-#### CSPRICEBASE Integration
-Access pricing data for CS2 items:
-- **Real-time market prices** from multiple marketplaces
-- **Comparative analysis** showing price differences across platforms
-- **Fast database lookups** for instant pricing information
-- **Markup injection** directly into marketplace interfaces
+- **Craft Markup Decay** — for high-markup listings (above 15%)
+- **Item Markup Decay** — for standard-markup listings
 
-#### Pricing Display Features
-- Item prices on Deposit/Withdraw pages
-- Buff163, CSFLOAT, YOUPIN price comparisons
+Each profile has its own drop percentage, interval (hours), and minimum floor. Decay is incremental: each interval drops the current markup by the configured amount until the floor is reached.
 
-### 📱 Comprehensive Notifications
+### Deposit Safeguard
 
-Stay informed of all trading activities through:
+Before auto-accepting a deposit, RollHelper compares the item's CSGORoll value against market prices from CSPricebase. If the item is undervalued beyond your configured threshold, the trade is blocked and you are notified.
 
-#### Discord Notifications
-- Real-time webhook integration
-- Detailed trade event information
-- Custom formatting and embeds
+Supported markets: Buff163, CSFloat, Youpin, or the lowest price across all three.
 
-#### Pushover Notifications *(Recommended)*
-- Priority notification delivery
-- Mobile push notifications
-- Custom sounds and alerts
+### Pricing Overlay
 
-#### Supported Events
--  **Deposits** - When items are deposited to your account
--  **Withdrawals** - When you withdraw items
--  **Cooldowns** - Trade cooldown notifications
+With a CSPricebase API key, RollHelper injects live market prices directly into CSGORoll deposit and withdraw pages. Console logs include full price breakdowns for every trade event.
 
-###  Developer Tools Integration
+### Notifications
 
-#### Console Logging System
-Detailed trade information logged to browser console:
-- Complete item details and specifications
-- Real-time pricing data
-- Buff163, CSFloat, YOUPIN price references
-- Maximum markup calculations
-- Direct links to CSP pricing database
-- Trade history and timestamps
+Multi-channel notifications for trade events:
 
-*Pro Tip: Set your DevTools to 'Info' level to filter out CSGORoll noise*
+- **Pushover** — mobile push notifications with configurable priority levels (-2 to 2)
+- **Discord** — webhook integration with formatted embeds
+- **Emergency mode** — forces maximum priority on critical alerts (for pushover)
 
+Supported events: deposits, withdrawals, completions, cooldowns, protected trades, reversals.
 
+---
 
-##  Installation
+## Installation
 
 ### Prerequisites
 
-- Google Chrome or Chromium-based browser
-- [CSGOTrader Extension](https://csgotrader.app/) (for Steam offer automation)
-- Active CSGORoll account
+- Google Chrome or any Chromium-based browser
+- Active [CSGORoll](https://csgoroll.com/r/RLHLPR) account
 
-### Step-by-Step Guide
+### Install
 
-#### Option 1: Git Clone (Recommended)
+**Option A — Git clone**
 
 ```bash
 git clone https://github.com/0xM14N/rollhelper-extension.git
-cd rollhelper-extension
 ```
 
-#### Option 2: Direct Download
+**Option B — Download ZIP**
 
-1. Visit the [GitHub repository](https://github.com/0xM14N/rollhelper-extension)
-2. Click the green **"Code"** button
-3. Select **"Download ZIP"**
-4. Extract the archive to a permanent location
+Download from the [repository page](https://github.com/0xM14N/rollhelper-extension) and extract to a permanent location.
 
-### Loading the Extension
+### Load into Chrome
 
-1. Open Chrome and navigate to `chrome://extensions`
-2. Enable **"Developer mode"** (toggle in top-right corner)
-3. Click **"Load unpacked"**
+1. Navigate to `chrome://extensions`
+2. Enable **Developer mode** (top-right toggle)
+3. Click **Load unpacked**
 4. Select the `rollhelper-extension` folder
-5. The extension icon should appear in your toolbar
-
-### Post-Installation Setup
-
-#### Configure CSGOTrader Integration
-
-For automatic Steam offer sending to work properly:
-
-1. Open CSGOTrader extension settings
-2. Enable the following options:
-  - ✅ **"Send offers based on query params"**
-  - ✅ **"Select item based on query params (autofill)"**
-  - ✅ **"Tabs API access"**
-3. Save settings
-
-> **⚠️ Important Notice:** While this feature has been thoroughly tested and used by many traders without issues, always verify that the correct items are being sent, especially when using automated Steam confirmations. Use at your own discretion.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
-### Extension Settings
+Click the RollHelper icon in your toolbar to open the settings popup.
 
-Access settings by clicking the RollHelper icon in your toolbar:
+### Trades Tab
 
-1. **Automation Settings**
-  - Toggle automatic deposit accepts
-  - Configure offer message templates
+- Toggle deposit auto-accept
+- Toggle auto-relist on failed/cancelled/expired/cooldown trades
+- Toggle automatic Steam offer sending
+- Toggle Steam offer auto-cancel
+- Set custom Steam offer message
 
-2. **Notification Preferences**
-  - Select notification channels (Discord/Pushover)
-  - Configure webhook URLs
-  - Set notification triggers
+### Deposits Tab
 
-3. **Display Options**
-  - Toggle pricing displays
----
+- **Craft Markup Decay** — enable/disable, set drop %, interval (hours), minimum %
+- **Item Markup Decay** — same settings, independent from craft
+- **Deposit Safeguard** — enable/disable, set threshold %, select reference market
 
-##  Pricing Integration (CSPRICEBASE)
+### Notifications Tab
 
-RollHelper's pricing features are powered by [CSPRICEBASE.com](https://cspricebase.com), providing accurate, real-time market data across multiple CS2 trading platforms.
+- Enable/disable Pushover and Discord channels
+- Toggle individual alert types (deposit, withdraw, completed, cooldown, protected, reversal)
+- Set per-event Pushover priority levels
+- Enter Pushover user key, token, and Discord webhook URL
+- Enable emergency mode for critical alerts
 
-### Getting Your CSPRICEBASE Subscription
+### Dashboard Tab
 
-#### Step 1: Create an Account
+- Enter your CSPricebase tracking key
+- Toggle trade tracking on/off
 
-1. Visit [CSPRICEBASE.com](https://cspricebase.com)
-2. Click **"Sign Up"** or **"Register"**
-3. Complete the registration form with:
-  - Valid email address
-  - Secure password
-  - Account details
-4. Verify your email address
+### Pricing Tab
 
-#### Step 2: Choose a Subscription Plan
-
-1. Log into your CSPRICEBASE account
-2. Get subscription that gives you access to the CSP DB
-
-#### Step 3: Complete Payment
-
-1. Your subscription becomes valid instantly after completing payment
-
-#### Step 4: Get Your API Key
-
-1. After successful payment, go to **"PROFILE"** 
-2. Click **"Generate API Key"**
-3. Copy your API key
-
-#### Step 5: Configure RollHelper
-
-1. Open RollHelper extension settings
-2. Navigate to **"Pricing"**
-3. Paste your CSPRICEBASE API key
-4. Save settings
-
-### Pricing Features Overview
-
-Once configured, you'll have access to:
-
-- **Comparative Pricing** - See prices across CSGORoll, Buff163
-- **Profit Margins** - Calculate potential profits instantly
-- **Database Lookups** - Fast pricing queries for any CS2 item
+- Enter your CSPricebase API key
+- Toggle pricing overlay on/off
 
 ---
 
-## 🔔 Notifications Setup
+## Pricing Integration
 
-### Discord Integration
+RollHelper's pricing system is powered by [CSPricebase](https://cspricebase.com).
 
-#### Creating a Webhook
+### Setup
 
-1. Open your Discord server
-2. Go to **Server Settings** → **Integrations** → **Webhooks**
-3. Click **"New Webhook"**
-4. Customize:
-  - Name: "RollHelper Bot"
-  - Channel: Select notification channel
-  - Avatar: Upload custom icon (optional)
-5. Click **"Copy Webhook URL"**
-6. Paste into RollHelper settings under **Discord Webhook URL**
+1. Create an account at [cspricebase.com](https://cspricebase.com)
+2. Subscribe to a plan that includes API access
+3. Generate your API key from your [profile page](https://cspricebase.com/profile)
+4. Paste the key into the **Pricing** tab in RollHelper settings
 
-#### Discord Notification Format
+### What you get
 
+- Live Buff163, CSFloat, and Youpin prices on deposit and withdraw pages
+- Price comparisons in console logs for every trade event
+- Markup calculations relative to market value
+- Safeguard integration to block undervalued deposits
 
-### Pushover Integration
-
-#### Setting Up Pushover
-
-1. Visit [Pushover.net](https://pushover.net) and create an account
-2. Install Pushover app on your mobile device(s)
-3. Log into the website and navigate to your dashboard
-4. Note your **User Key** (format: `uxxxxxxxxxxxxxxxxxxxxxxx`)
-5. Create a new application:
-  - Click **"Create an Application/API Token"**
-  - Name: "RollHelper"
-  - Type: Application
-  - Description: "CSGORoll trading notifications"
-6. Save and copy your **API Token**
-
-
-
-### Notification Events
-
-Configure which events trigger notifications:
-
-- **Deposit Events**
-  - ✅ Deposit accepted
-
-- **Withdrawal Events**
-  - ✅ Withdrawal initiated
-
-- **Trade Cooldowns**
-  - ✅ Item cooldown started
 ---
 
-## 📖 Usage Guide
+## Trade Tracking
 
+Track all your CSGORoll trades into a personal dashboard on CSPricebase.
 
-### Console Logging
+### Setup
 
-Open Developer Tools (F12) to access detailed trade information:
+1. Visit [cspricebase.com/trades/setup](https://cspricebase.com/trades/setup) and generate a free tracking key
+2. Paste it into the **Dashboard** tab in RollHelper settings
+3. Enable trade tracking
+
+All deposit and withdrawal events are logged to your dashboard for historical analysis.
+
+---
+
+## Notifications
+
+### Discord
+
+1. Create a webhook in your Discord server: **Server Settings > Integrations > Webhooks**
+2. Copy the webhook URL
+3. Paste into the **Notifications** tab in RollHelper
+
+### Pushover
+
+1. Create an account at [pushover.net](https://pushover.net)
+2. Install the Pushover app on your phone
+3. Create an application token (name it "RollHelper")
+4. Enter your user key and application token in the **Notifications** tab
+
+Priority levels follow the Pushover scale: `-2` (silent) through `2` (emergency with repeat alerts).
+
+---
+
+## Console Logging
+
+Open DevTools (`F12`) and filter to **Info** level for clean output. Every trade event is logged with full context:
 
 ```
-[15:03] | [WITHDRAW - ACCEPTED]
-Glock-18 | Glockingbird (Minimal Wear)
-9.73 coins | (0%) | 6.4218$
-[LIQ]: 50% | [MAX MARKUP]: 12%
-[BUFF163_%]: +3.2%
-[CSFLOAT_%]: +3%
-[YOUPIN_%]: +2%
+[15:03] | [DEPOSIT]
+StatTrak AK-47 | Slate (Minimal Wear)
+41.82 coins | (12%) | 27.60$
+[LIQ]: 84% | [MAX MARKUP]: 12%
+[BUFF163]: +7.6%
+[CSFLOAT]: +9.5%
+[YOUPIN]: +6.2% (RATE: 0.66)
 ```
 
-
-#### Security Recommendations
-
-- Never share your API keys or webhook URLs
-- Double-check trades manually
-- Keep the extension updated to the latest version
-- Review trade history regularly
+Decay events, relist actions, safeguard blocks, and Steam offer results are also logged with timestamps.
 
 ---
 
-## ❓ FAQ
+## FAQ
 
-### General Questions
+**Is RollHelper free?**
+Yes. The extension is open-source under GPLv3. Pricing features require a CSPricebase subscription.
 
-**Q: Is RollHelper free to use?**  
-A: Yes, the extension itself is completely free and open-source. However, pricing features require a CSPRICEBASE subscription.
+**Does this work on other trading sites?**
+No. RollHelper is built specifically for CSGORoll.
 
-**Q: What if I need more features in my rollhelper?**  
-A: I currenty offer premium version of rollhelper aswell, this includes features as: Automatic steam token renew, Always-online store or any other custom features you might need. For more info contact me on discord (maintrades)
+**Does this violate CSGORoll's Terms of Service?**
+RollHelper automates actions you would perform manually. Review CSGORoll's current ToS and use at your own discretion.
 
+**How do I update?**
+Git users: `git pull`. ZIP users: download the latest release and replace the folder, then reload in `chrome://extensions`.
 
-**Q: Does this violate CSGORoll's Terms of Service?**  
-A: RollHelper is designed to enhance the trading experience without providing unfair advantages. Always review CSGORoll's current ToS. Use at your own discretion.
+**Pricing data not showing?**
+Verify your CSPricebase API key is valid and your subscription is active.
 
-**Q: Will this work on other CS2 trading sites?**  
-A: Currently, RollHelper is specifically designed for CSGORoll. Support for other platforms may be added in future versions.
-
-### Technical Questions
-
-**Q: Why isn't automatic Steam offer sending working?**  
-A: Ensure you've properly configured CSGOTrader extension settings and enabled all required permissions.
-
-**Q: Pricing data isn't showing up?**  
-A: Verify your CSPRICEBASE API key is valid and your subscription is active. Check the connection in settings.
-
-**Q: Can I use this on multiple devices?**  
-A: Yes! Install on each device and use the same API keys/webhooks for consistent notifications.
-
-**Q: How do I update the extension?**  
-A: For git installations, run `git pull`. For zip downloads, download the latest release and replace files.
-
-### Troubleshooting
-
-**Q: Extension isn't loading on CSGORoll?**  
-A: Refresh the page, check that the extension is enabled in `chrome://extensions`, and verify permissions are granted.
-
-**Q: Notifications stopped working?**  
-A: Check your Discord webhook URL or Pushover tokens. Test the connection in settings.
-
-**Q: Console is showing errors?**  
-A: Set Developer Tools to "Info" level to filter CSGORoll errors. If RollHelper errors persist, report them on GitHub.
+**Steam offers not sending?**
+Verify the extension has the necessary permissions and that your Steam access token is valid. Check the console for error details.
 
 ---
 
-##  Support
+## Custom Development
 
-### Getting Help
+Need features beyond what the public version offers? Custom builds are available, including:
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/0xM14N/rollhelper-extension/issues)
-- **Discord**: Contact `maintrades` for direct support
-- **Documentation**: Check this README for detailed guidance
+- Advanced automation rules
+- High-volume trading optimizations
+- Custom notification logic
+- Anything else your operation requires
 
-### Reporting Bugs
-
-When reporting issues, please include:
-
-1. Chrome version and OS
-2. Extension version
-3. Steps to reproduce the issue
-4. Console error messages (F12)
-5. Screenshots (if applicable)
-
-### Feature Requests
-
-Have an idea for RollHelper? Open an issue on GitHub with:
-
-- Clear description of the feature
-- Use case explanation
-- Why it would benefit traders
-
-### Custom Development
-
-Need custom features for your trading operation?
-
-- Always-on store monitoring
-- Custom automation rules
-- Token auto-updater
-- Advanced pricing algorithms
-- High-volume trading tools
-
-**Contact:** Discord @ `maintrades` for custom development inquiries.
+Contact **maintrades** on Discord for inquiries.
 
 ---
 
-## 📄 License
+## License
 
-This project is licensed under the **GNU General Public License v3.0** (GPL-3.0).
+Licensed under the [GNU General Public License v3.0](LICENSE).
 
-You are free to:
-- ✅ Use the software for any purpose
-- ✅ Study how the program works
-- ✅ Modify the software
-- ✅ Distribute copies
-
-Under the conditions:
-- ⚠️ Disclose source code
-- ⚠️ License and copyright notice
-- ⚠️ Same license for derivatives
-- ⚠️ State changes made to code
-
-See [LICENSE](LICENSE) for full details.
-
----
-
-## 🔗 Important Links
-
-- **Extension Repository**: [github.com/0xM14N/rollhelper-extension](https://github.com/0xM14N/rollhelper-extension)
-- **CSGORoll** (Support the project): [csgoroll.com/r/RLHLPR](https://csgoroll.com/r/RLHLPR)
-- **CSPRICEBASE**: [cspricebase.com](https://cspricebase.com)
-- **CSGOTrader**: [csgotrader.app](https://csgotrader.app)
+You are free to use, study, modify, and distribute this software. Derivative works must be distributed under the same license with source code disclosed.
 
 ---
 
 <div align="center">
 
-### ⭐ If RollHelper helped your trading, consider starring the repo!
+**[CSGORoll](https://csgoroll.com/r/RLHLPR)** | **[CSPricebase](https://cspricebase.com)** | **[GitHub](https://github.com/0xM14N/rollhelper-extension)**
 
-**Made with 💙 for the CS2 trading community**
+By installing this extension, you agree to use referral code `RLHLPR` on CSGORoll.
 
-*By installing this extension, you agree to use referral code `RLHLPR` on CSGORoll. Thanks for the support!*
+Created by [maintrades](https://github.com/0xM14N)
 
 </div>

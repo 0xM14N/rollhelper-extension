@@ -21,6 +21,19 @@ const acceptTrade = tradeid => {
 	);
 };
 
+const createTradeSubscriptionId = uuidv4();
+let createTradePayload = {
+	id: createTradeSubscriptionId,
+	type: 'subscribe',
+	payload: {
+		variables: {},
+		extensions: {},
+		operationName: 'OnCreateTrade',
+		query:
+		'subscription OnCreateTrade { createTrades { trades { ...SimpleTrade __typename } __typename } } fragment SimpleTrade on Trade { id depositorLastActiveAt markupPercent totalValue avgPaintWear hasStickers tradeItems { ...SimpleTradeItem __typename } trackingType avgPaintWearRange { min max __typename } canJoinAfter depositor { id steamDisplayName steamId __typename } suspectedTraderCanJoinAfter status steamAppName customValue createdAt updatedAt canJoin expiresAt withdrawer { id steamId steamDisplayName steamLevel avatar steamRegistrationDate name __typename } joinedAt cancelReason withdrawerSteamTradeUrl __typename } fragment SimpleTradeItem on TradeItem { id marketName markupPercent customValue steamExternalAssetId itemVariant { ...SimpleTradeItemVariant __typename } stickers { ...SimpleTradeItemSticker __typename } value patternPercentage __typename } fragment SimpleTradeItemVariant on ItemVariant { brand color name iconUrl rarity depositable itemId id value currency externalId __typename } fragment SimpleTradeItemSticker on TradeItemSticker { imageUrl id name color wear brand __typename }'
+	},
+};
+
 const subscriptionId = uuidv4();
 let updateTradePayload = {
 	id: subscriptionId,

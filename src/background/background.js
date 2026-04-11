@@ -11,6 +11,53 @@ activeWs = new Set();
 
 const MAX_STEAM_INV_RETRIES = 10;
 
+const STEAM_DNR_RULE_ID = 9999;
+
+async function getSteamSession() {
+	const cookies = await chrome.cookies.getAll({ domain: 'steamcommunity.com' });
+	const cookieString = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+	const sessionId = cookies.find(c => c.name === 'sessionid')?.value;
+	if (!sessionId) {
+		throw new Error('Steam sessionid cookie not found - are you logged into Steam?');
+	}
+	return { sessionId, cookieString };
+}
+
+async function steamCommunityFetch(url, { method = 'POST', body = null, referer = '', cookieString = '' } = {}) {
+	await chrome.declarativeNetRequest.updateDynamicRules({
+		removeRuleIds: [STEAM_DNR_RULE_ID],
+		addRules: [{
+			id: STEAM_DNR_RULE_ID,
+			priority: 1,
+			action: {
+				type: 'modifyHeaders',
+				requestHeaders: [
+					{ header: 'Cookie', operation: 'set', value: cookieString },
+					{ header: 'Referer', operation: 'set', value: referer || url }
+				]
+			},
+			condition: {
+				urlFilter: url,
+				resourceTypes: ['xmlhttprequest']
+			}
+		}]
+	});
+
+	try {
+		const res = await fetch(url, {
+			method,
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+			body
+		});
+		const text = await res.text();
+		return { status: res.status, body: text };
+	} finally {
+		chrome.declarativeNetRequest.updateDynamicRules({
+			removeRuleIds: [STEAM_DNR_RULE_ID]
+		});
+	}
+}
+
 function getCsgorollCookies() {
 	return new Promise((resolve) => {
 		chrome.cookies.getAll({
@@ -33,53 +80,21 @@ async function getSessionCookie() {
 	return sessionCookie || null;
 }
 
-//todo: rework - more lightweight endpoint to grab the data (dont open tab? fetch?)
-async function getSteamData() {
-	return new Promise((resolve, reject) => {
-		chrome.tabs.create({ url: 'https://steamcommunity.com/', active: false }, function (tab) {
-			if (!tab || !tab.id) {
-				reject('Failed to create Steam tab');
-				return;
-			}
-
-			chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
-				if (tabId === tab.id && info.status === 'complete') {
-					chrome.tabs.onUpdated.removeListener(listener);
-
-					chrome.scripting.executeScript({
-						target: { tabId: tab.id },
-						func: () => {
-							const body = document.documentElement.innerHTML;
-
-							const steamIdMatch = /g_steamID = "\d+";/.exec(body);
-							const steamId = steamIdMatch?.at(0).replace('g_steamID = ', '').replaceAll('"', '').replaceAll(';', '');
-							const webAPITokenMatch = /data-loyalty_webapi_token="&quot;([a-zA-Z0-9_.-]+)&quot;"/.exec(body);
-							const token = webAPITokenMatch[1];
-							return {
-								token,
-								steamId,
-							}
-						}
-					}, (results) => {
-						// console.log(results)
-						if (chrome.runtime.lastError) {
-							reject(new Error(chrome.runtime.lastError.message));
-							return;
-						}
-
-						const result = results?.[0]?.result;
-						if (!result || !result.token || !result.steamId) {
-							reject(new Error('Failed to parse steam data'));
-							return;
-						}
-
-						chrome.tabs.remove(tab.id);
-						resolve(result);
-					});
-				}
-			});
-		});
+async function getSteamAccessToken() {
+	const res = await fetch('https://steamcommunity.com/pointssummary/ajaxgetasyncconfig', {
+		credentials: 'include'
 	});
+
+	if (!res.ok) {
+		throw new Error(`Steam ajaxgetasyncconfig failed with status ${res.status}`);
+	}
+
+	const json = await res.json();
+	if (!json.success || !json.data?.webapi_token) {
+		throw new Error('Failed to get Steam webapi_token - are you logged into Steam in this browser?');
+	}
+
+	return json.data.webapi_token;
 }
 
 
@@ -201,7 +216,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		return true;
 	}
 
-	// todo: optimize the query only for neccessary data
 	if (request.action === "getUserID") {
 		getCsgorollCookies().then(cookieString => {
 			fetch(request.domain, {
@@ -219,107 +233,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 					variables: {},
 					query: `query CurrentUser {
 				  currentUser {
-					...User
-					__typename
-				  }
-				}
-				
-				fragment User on User {
-				  steamAccessToken
-				  steamAccessTokenExpiresAt
-				  id
-				  name
-				  email
-				  verified
-				  currency
-				  createdAt
-				  acceptTos
-				  avatar
-				  steamId
-				  mutedUntil
-				  userProgress {
 					id
-					xp
-					requiredXp
-					nextRequiredXp
-					level
+					steamId
+					steamAccessToken
+					steamAccessTokenExpiresAt
 					__typename
 				  }
-				  unlockedChat
-				  lastDepositAt
-				  stickyReferee
-				  steamApiKey
-				  steamTradeUrl
-				  verificationStatus
-				  totalDeposit
-				  dailyWithdrawLimit
-				  preferences {
-					...UserPreferences
-					__typename
-				  }
-				  referralPromoCode {
-					id
-					code
-					__typename
-				  }
-				  team {
-					id
-					name
-					__typename
-				  }
-				  tickets {
-					total
-					__typename
-				  }
-				  wallets {
-					...Wallet
-					__typename
-				  }
-				  market {
-					id
-					slug
-					name
-					__typename
-				  }
-				  trader
-				  suspectedTrader
-				  microphoneEnabled
-				  __typename
-				}
-				
-				fragment UserPreferences on UserPreferences {
-				  id
-				  name
-				  lastName
-				  address1
-				  address2
-				  postcode
-				  region
-				  city
-				  country {
-					code
-					name
-					__typename
-				  }
-				  birthDate
-				  gender
-				  phone
-				  __typename
-				}
-				
-				fragment Wallet on Wallet {
-				  id
-				  name
-				  amount
-				  currency
-				  __typename
 				}`
 				})
 			})
-				.then(res => {
-					let data = res.json()
-					return data;
-				})
+				.then(res => res.json())
 				.then(data => sendResponse(data))
 				.catch(error => sendResponse({ error: error.message }));
 		});
@@ -446,6 +369,122 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 		return true;
 	}
 
+	if (request.action === "fetchUserListedTrades") {
+		getCsgorollCookies().then(cookieString => {
+			let allTrades = [];
+			let afterCursor = '';
+
+			const fetchPage = () => {
+				const variables = {
+					first: 250,
+					orderBy: ['ID_DESC'],
+					statuses: 'LISTED',
+					userId: request.userId,
+				};
+				if (afterCursor) variables.after = afterCursor;
+
+				fetch(request.domain, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json, text/plain, */*',
+						'Content-Type': 'application/json',
+						'Cookie': cookieString,
+						'Origin': 'https://www.csgoroll.com',
+						'Referer': 'https://www.csgoroll.com/'
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						operationName: 'UserTradeList',
+						variables,
+						query: `query UserTradeList($first: PaginationAmount, $after: String, $orderBy: [TradeOrderBy], $statuses: TradeStatus, $userId: ID) { trades(first: $first, after: $after, orderBy: $orderBy, status: $statuses, userId: $userId) { edges { node { ...SimpleTrade __typename } __typename } pageInfo { hasNextPage endCursor __typename } __typename } } fragment SimpleTrade on Trade { id depositorLastActiveAt markupPercent totalValue avgPaintWear hasStickers tradeItems { ...SimpleTradeItem __typename } trackingType avgPaintWearRange { min max __typename } canJoinAfter depositor { id steamDisplayName steamId __typename } suspectedTraderCanJoinAfter status steamAppName customValue createdAt updatedAt canJoin expiresAt withdrawer { id steamId steamDisplayName steamLevel avatar steamRegistrationDate name __typename } joinedAt cancelReason withdrawerSteamTradeUrl __typename } fragment SimpleTradeItem on TradeItem { id marketName markupPercent customValue steamExternalAssetId itemVariant { ...SimpleTradeItemVariant __typename } stickers { ...SimpleTradeItemSticker __typename } value patternPercentage __typename } fragment SimpleTradeItemVariant on ItemVariant { brand color name iconUrl rarity depositable itemId id value currency externalId __typename } fragment SimpleTradeItemSticker on TradeItemSticker { imageUrl id name color wear brand __typename }`,
+					}),
+				})
+					.then(res => res.json())
+					.then(data => {
+						const trades = data?.data?.trades;
+						if (trades?.edges) {
+							allTrades.push(...trades.edges.map(e => e.node));
+						}
+						if (trades?.pageInfo?.hasNextPage && trades?.pageInfo?.endCursor) {
+							afterCursor = trades.pageInfo.endCursor;
+							fetchPage();
+						} else {
+							sendResponse(allTrades);
+						}
+					})
+					.catch(error => sendResponse({ error: error.message }));
+			};
+			fetchPage();
+		});
+		return true;
+	}
+
+	if (request.action === "cancelCsgorollTrade") {
+		getCsgorollCookies().then(cookieString => {
+			fetch(request.domain, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json, text/plain, */*',
+					'Content-Type': 'application/json',
+					'Cookie': cookieString,
+					'Origin': 'https://www.csgoroll.com',
+					'Referer': 'https://www.csgoroll.com/'
+				},
+				credentials: 'include',
+				body: JSON.stringify({
+					operationName: 'CancelTrade',
+					variables: {
+						input: { tradeId: request.tradeId }
+					},
+					query: `mutation CancelTrade($input: CancelTradeInput!) { cancelTrade(input: $input) { trade { id cancelReason expiresAt status totalValue __typename } __typename } }`,
+				}),
+			})
+				.then(res => res.json())
+				.then(data => sendResponse(data))
+				.catch(error => sendResponse({ error: error.message }));
+		});
+		return true;
+	}
+
+	if (request.action === "relistDeposit") {
+		getCsgorollCookies().then(cookieString => {
+			fetch(request.domain, {
+				method: 'POST',
+				headers: {
+					Accept: 'application/json, text/plain, */*',
+					'Content-Type': 'application/json',
+					'Cookie': cookieString,
+					'Origin': 'https://www.csgoroll.com',
+					'Referer': 'https://www.csgoroll.com/'
+				},
+				credentials: 'include',
+				body: JSON.stringify({
+					operationName: 'createTrades',
+					variables: {
+						input: {
+							tradeItemsList: [
+								[
+									{
+										assetId: request.assetId,
+										itemVariantId: request.itemVariantId,
+										value: request.value,
+									}
+								]
+							],
+							trackByUniqueId: true,
+							visualRecaptcha: null,
+						}
+					},
+					query: `mutation createTrades($input: CreateTradesInput!) { createTrades(input: $input) { trades { ...SimpleTrade __typename } __typename } } fragment SimpleTrade on Trade { id depositorLastActiveAt markupPercent totalValue avgPaintWear hasStickers tradeItems { ...SimpleTradeItem __typename } trackingType avgPaintWearRange { min max __typename } canJoinAfter depositor { id steamDisplayName steamId __typename } suspectedTraderCanJoinAfter status steamAppName customValue createdAt updatedAt canJoin expiresAt withdrawer { id steamId steamDisplayName steamLevel avatar steamRegistrationDate name __typename } joinedAt cancelReason withdrawerSteamTradeUrl __typename } fragment SimpleTradeItem on TradeItem { id marketName markupPercent customValue steamExternalAssetId itemVariant { ...SimpleTradeItemVariant __typename } stickers { ...SimpleTradeItemSticker __typename } value patternPercentage __typename } fragment SimpleTradeItemVariant on ItemVariant { brand color name iconUrl rarity depositable itemId id value currency externalId __typename } fragment SimpleTradeItemSticker on TradeItemSticker { imageUrl id name color wear brand __typename }`,
+				}),
+			})
+				.then(res => res.json())
+				.then(data => sendResponse(data))
+				.catch(error => sendResponse({ error: error.message }));
+		});
+		return true;
+	}
+
 	if (request.action === "fetchAcceptTrade") {
 		getCsgorollCookies().then(cookieString => {
 			fetch(request.domain, {
@@ -510,6 +549,7 @@ chrome.runtime.onInstalled.addListener(details => {
 				wantDepoAlert: false,
 				peApi: null,
 				switchDepoState: false,
+				wantAutoRelist: false,
 				switchNotifyState: false,
 				token: null,
 				userkey: null,
@@ -528,13 +568,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 	switch (msg.type) {
 		case "updateAccessToken":
 			(async () => {
-				try{
-					let { token, steamId } = await getSteamData();
-					if (!token || !steamId) {
-						console.log('NO TOKEN OR STEAMID - Sending error response');
-						sendResponse({ error: "Failed to get steam data. Are you logged in steam?" });
+				try {
+					if (!msg.steamId) {
+						sendResponse({ error: "steamId is required for updateAccessToken" });
 						return;
 					}
+
+					const token = await getSteamAccessToken();
 					const cookieString = await getCsgorollCookies();
 
 					const res = await fetch(msg.domain, {
@@ -557,7 +597,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 							  }`,
 							variables: {
 								input: {
-									steamId: steamId,
+									steamId: msg.steamId,
 									accessToken: token
 								}
 							},
@@ -567,12 +607,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 					const data = await res.json();
 					sendResponse(data);
-
-				}	catch (error) {
-					console.log(error)
+				} catch (error) {
+					console.log(error);
 					sendResponse({ error: error.message });
 				}
 			})()
+			return true;
 
 		case 'getActiveRollUrls':
 			chrome.tabs.query({}, function (tabs) {
@@ -590,24 +630,90 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			return true;
 
 		case 'sendSteamOffer':
-			let offerMsg = msg.offerMsg;
-			const steamTradeUrl = msg.tradeLink;
-			const assetID = msg.assetID;
-			let tradelinkOffer = '';
+			(async () => {
+				try {
+					const tradeUrl = new URL(msg.tradeLink);
+					const partnerId = tradeUrl.searchParams.get('partner');
+					const tradeToken = tradeUrl.searchParams.get('token');
 
-			if (
-				offerMsg === undefined ||
-				offerMsg === null ||
-				offerMsg === ' ' ||
-				offerMsg === ''
-			) {
-				tradelinkOffer = `${steamTradeUrl}&csgotrader_send=your_id_730_2_${assetID}`;
-			} else {
-				let encodedMsg = encodeURIComponent(offerMsg);
-				tradelinkOffer = `${steamTradeUrl}&csgotrader_send=your_id_730_2_${assetID}&csgotrader_message=${encodedMsg}`;
-			}
+					if (!partnerId || !tradeToken) {
+						sendResponse({ error: 'Invalid trade link - missing partner or token' });
+						return;
+					}
 
-			chrome.tabs.create({ url: tradelinkOffer });
+					const { sessionId, cookieString } = await getSteamSession();
+					const partnerSteamId64 = (BigInt('76561197960265728') + BigInt(partnerId)).toString();
+
+					const tradeOfferParams = {
+						newversion: true,
+						version: 4,
+						me: {
+							assets: [{ appid: 730, contextid: "2", amount: 1, assetid: msg.assetID }],
+							currency: [],
+							ready: false
+						},
+						them: {
+							assets: [],
+							currency: [],
+							ready: false
+						}
+					};
+
+					const body = new URLSearchParams({
+						sessionid: sessionId,
+						serverid: '1',
+						partner: partnerSteamId64,
+						tradeoffermessage: msg.offerMsg || '',
+						json_tradeoffer: JSON.stringify(tradeOfferParams),
+						captcha: '',
+						trade_offer_create_params: JSON.stringify({ trade_offer_access_token: tradeToken })
+					});
+
+					const res = await steamCommunityFetch('https://steamcommunity.com/tradeoffer/new/send', {
+						referer: `https://steamcommunity.com/tradeoffer/new/?partner=${partnerId}&token=${tradeToken}`,
+						cookieString,
+						body
+					});
+
+					let data;
+					try {
+						data = JSON.parse(res.body);
+					} catch {
+						sendResponse({ error: `Steam returned non-JSON (status ${res.status}): ${res.body?.substring(0, 200)}` });
+						return;
+					}
+
+					if (data && data.tradeofferid) {
+						sendResponse({ success: true, tradeofferid: data.tradeofferid });
+					} else {
+						sendResponse({ error: data?.strError || `Failed to send trade offer (status ${res.status}): ${res.body?.substring(0, 300)}` });
+					}
+				} catch (error) {
+					sendResponse({ error: error.message });
+				}
+			})();
+			return true;
+
+		case 'cancelSteamOffer':
+			(async () => {
+				try {
+					const { sessionId, cookieString } = await getSteamSession();
+
+					const res = await steamCommunityFetch(`https://steamcommunity.com/tradeoffer/${msg.tradeofferid}/cancel`, {
+						referer: `https://steamcommunity.com/tradeoffer/${msg.tradeofferid}/`,
+						cookieString,
+						body: new URLSearchParams({ sessionid: sessionId })
+					});
+
+					if (res.status === 200) {
+						sendResponse({ success: true });
+					} else {
+						sendResponse({ error: `Failed to cancel trade offer (status ${res.status}): ${res.body?.substring(0, 200)}` });
+					}
+				} catch (error) {
+					sendResponse({ error: error.message });
+				}
+			})();
 			return true;
 
 		case 'cspricebase':

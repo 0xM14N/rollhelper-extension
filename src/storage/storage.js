@@ -24,6 +24,20 @@ const updateSettings = async () => {
 		{ wantProtectedAlert },
 		{ trackingApiKey },
 		{ enableTracking },
+		{ wantAutoCancelOffers },
+		{ wantEmergencyAlerts },
+		{ wantAutoRelist },
+		{ wantMarkupDecay },
+		{ markupDecayPercent: storedDecayPercent },
+		{ markupDecayInterval: storedDecayInterval },
+		{ markupDecayFloor: storedDecayFloor },
+		{ wantItemDecay },
+		{ itemDecayPercent: storedItemDecayPercent },
+		{ itemDecayInterval: storedItemDecayInterval },
+		{ itemDecayFloor: storedItemDecayFloor },
+		{ wantDepositSafeguard },
+		{ safeguardThresholdVal },
+		{ safeguardMarketVal },
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -49,6 +63,20 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['wantProtectedAlert']),
 		chrome.storage.sync.get(['trackingApiKey']),
 		chrome.storage.sync.get(['enableTracking']),
+		chrome.storage.sync.get(['wantAutoCancelOffers']),
+		chrome.storage.sync.get(['wantEmergencyAlerts']),
+		chrome.storage.sync.get(['wantAutoRelist']),
+		chrome.storage.sync.get(['wantMarkupDecay']),
+		chrome.storage.sync.get(['markupDecayPercent']),
+		chrome.storage.sync.get(['markupDecayInterval']),
+		chrome.storage.sync.get(['markupDecayFloor']),
+		chrome.storage.sync.get(['wantItemDecay']),
+		chrome.storage.sync.get(['itemDecayPercent']),
+		chrome.storage.sync.get(['itemDecayInterval']),
+		chrome.storage.sync.get(['itemDecayFloor']),
+		chrome.storage.sync.get(['wantDepositSafeguard']),
+		chrome.storage.sync.get(['safeguardThresholdVal']),
+		chrome.storage.sync.get(['safeguardMarketVal']),
 	]);
 
 	offerMessage = steamOfferMessage;
@@ -77,6 +105,20 @@ const updateSettings = async () => {
 
 	trackingKey = trackingApiKey
 	wantTracking = enableTracking
+	autoCancelOffers = wantAutoCancelOffers
+	emergencyAlerts = wantEmergencyAlerts
+	autoRelist = wantAutoRelist
+	markupDecayEnabled = wantMarkupDecay
+	markupDecayAmount = Number(storedDecayPercent) || 10
+	markupDecayIntervalHours = Number(storedDecayInterval) || 4
+	markupDecayMinPercent = Number(storedDecayFloor) || 50
+	itemDecayEnabled = wantItemDecay
+	itemDecayAmount = Number(storedItemDecayPercent) || 1
+	itemDecayIntervalHours = Number(storedItemDecayInterval) || 6
+	itemDecayMinPercent = Number(storedItemDecayFloor) || 75
+	depositSafeguard = wantDepositSafeguard
+	safeguardThreshold = Number(safeguardThresholdVal) || 5
+	safeguardMarket = safeguardMarketVal || 'buff'
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

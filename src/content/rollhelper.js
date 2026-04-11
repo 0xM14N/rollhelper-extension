@@ -1,4 +1,4 @@
-let version = `1.3`;
+let version = `1.4`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -34,11 +34,13 @@ console.log(
 );
 
 let STEAM_OFFER_ERROR_PRIORITY = 0;
+let emergencyAlerts;
 
 let pi;
 let rates;
 let itemID;
 let userID;
+let steamId;
 let balance;
 let socket;
 let itemsList = [];
@@ -49,7 +51,216 @@ let messageQueueLocked = true;
 
 const MAX_RECONNECT_ATTEMPTS = 20;
 const RECONNECT_BASE_DELAY = 60_000;
-const RECONNECT_MAX_DELAY = 82_000;
+const RECONNECT_MAX_DELAY = 85_000;
+
+// Markup decay state
+let decayTrackedTrades = {};
+const DECAY_CHECK_INTERVAL = 60_000;
+const CRAFT_MARKUP_THRESHOLD = 15;
+
+async function loadDecayState() {
+    const { markupDecayTrades = {} } =
+        await chrome.storage.local.get(['markupDecayTrades']);
+    decayTrackedTrades = markupDecayTrades;
+}
+
+async function saveDecayState() {
+    await chrome.storage.local.set({
+        markupDecayTrades: decayTrackedTrades,
+    });
+}
+
+function getDecayType(markup) {
+    return markup > CRAFT_MARKUP_THRESHOLD ? 'craft' : 'item';
+}
+
+function isDecayEnabledFor(type) {
+    return type === 'craft' ? markupDecayEnabled : itemDecayEnabled;
+}
+
+function getDecaySettings(type) {
+    if (type === 'craft') {
+        return {
+            amount: markupDecayAmount,
+            intervalHours: markupDecayIntervalHours,
+            floorPercent: markupDecayMinPercent,
+        };
+    }
+    return {
+        amount: itemDecayAmount,
+        intervalHours: itemDecayIntervalHours,
+        floorPercent: itemDecayMinPercent,
+    };
+}
+
+function trackForMarkupDecay(trade) {
+    const tradeItem = getTradeItem(trade);
+    if (!tradeItem) return;
+
+    const isOurDeposit = trade.depositor?.id === userID ||
+        itemsList.some(i => i.steamExternalId === tradeItem.steamExternalAssetId);
+    if (!isOurDeposit) return;
+    const markup = tradeItem.markupPercent;
+    if (markup <= 0) return;
+    if (decayTrackedTrades[trade.id]) return;
+
+    const steamExternalId = tradeItem.steamExternalAssetId;
+    const decayType = getDecayType(markup);
+
+    if (!isDecayEnabledFor(decayType)) return;
+
+    decayTrackedTrades[trade.id] = {
+        tradeId: trade.id,
+        marketName: tradeItem.marketName,
+        currentMarkup: markup,
+        baseValue: tradeItem.itemVariant?.value,
+        itemVariantId: tradeItem.itemVariant?.id,
+        steamExternalAssetId: steamExternalId,
+        lastDecayAt: new Date().toISOString(),
+        iconUrl: tradeItem.itemVariant?.iconUrl || '',
+        decayType: decayType,
+    };
+
+    saveDecayState();
+    const label = decayType === 'craft' ? 'CRAFT-DECAY' : 'ITEM-DECAY';
+    console.log(`%c${DateFormater(new Date())} | [${label}] Tracking ${tradeItem.marketName} at ${markup}%`, noticeCSSlog);
+}
+
+function untrackMarkupDecay(tradeId) {
+    if (!decayTrackedTrades[tradeId]) return;
+    delete decayTrackedTrades[tradeId];
+    saveDecayState();
+}
+
+async function seedDecayFromListedTrades() {
+    if (!markupDecayEnabled && !itemDecayEnabled) return;
+    try {
+        const listedTrades = await fetchUserListedTrades();
+        if (!Array.isArray(listedTrades) || listedTrades.length === 0) {
+            // No listed trades
+            if (Object.keys(decayTrackedTrades).length > 0) {
+                decayTrackedTrades = {};
+                await saveDecayState();
+            }
+            return;
+        }
+
+        const listedIds = new Set(listedTrades.map(t => t.id));
+        let pruned = 0;
+        for (const tradeId of Object.keys(decayTrackedTrades)) {
+            if (!listedIds.has(tradeId)) {
+                delete decayTrackedTrades[tradeId];
+                pruned++;
+            }
+        }
+        if (pruned > 0) {
+            console.log(`%c${DateFormater(new Date())} | [DECAY] Pruned ${pruned} stale entries from decay tracker`, noticeCSSlog);
+        }
+
+        let seeded = 0;
+        for (const trade of listedTrades) {
+            if (trade.status !== 'LISTED') continue;
+            if (decayTrackedTrades[trade.id]) continue;
+            trackForMarkupDecay(trade);
+            if (decayTrackedTrades[trade.id]) seeded++;
+        }
+
+        if (seeded > 0) {
+            console.log(`%c${DateFormater(new Date())} | [DECAY] Seeded ${seeded} existing listed deposits for decay tracking`, noticeCSSlog);
+        }
+
+        await saveDecayState();
+    } catch (err) {
+        console.log(`%c${DateFormater(new Date())} | [DECAY] Failed to seed listed trades: ${err.message}`, errorCSSlog);
+    }
+}
+
+async function checkMarkupDecay() {
+    if (!markupDecayEnabled && !itemDecayEnabled) return;
+    if (Object.keys(decayTrackedTrades).length === 0) return;
+
+    const now = Date.now();
+
+    for (const [tradeId, data] of Object.entries({ ...decayTrackedTrades })) {
+        const type = data.decayType || 'craft';
+        if (!isDecayEnabledFor(type)) continue;
+
+        const settings = getDecaySettings(type);
+        const intervalMs = settings.intervalHours * 3600_000;
+        const elapsed = now - new Date(data.lastDecayAt).getTime();
+        const intervalsPassed = Math.floor(elapsed / intervalMs);
+
+        if (intervalsPassed < 1) continue;
+
+        // Already at or below floor
+        if (data.currentMarkup <= settings.floorPercent) {
+            decayTrackedTrades[tradeId].lastDecayAt = new Date().toISOString();
+            await saveDecayState();
+            continue;
+        }
+
+        const drop = intervalsPassed * settings.amount;
+        const targetMarkup = Math.max(data.currentMarkup - drop, settings.floorPercent);
+
+        console.log(`%c${DateFormater(new Date())} | [${type === 'craft' ? 'CRAFT-DECAY' : 'ITEM-DECAY'}] ${data.marketName}: ${data.currentMarkup}% -> ${targetMarkup}% (elapsed: ${(elapsed / 3600_000).toFixed(2)}h, intervals: ${intervalsPassed})`, noticeCSSlog);
+        await performDecayRelist(tradeId, data, targetMarkup);
+    }
+}
+
+async function retryWithBackoff(fn, label, maxRetries = 4) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            if (attempt === maxRetries) throw err;
+            const delay = (attempt + 1) * 5000;
+            console.log(`%c${DateFormater(new Date())} | [${label}] Attempt ${attempt + 1} failed: ${err.message} — retrying in ${delay / 1000}s`, noticeCSSlog);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+}
+
+async function performDecayRelist(tradeId, data, newMarkup) {
+    const marketName = data.marketName;
+    const label = data.decayType === 'craft' ? 'CRAFT-DECAY' : 'ITEM-DECAY';
+
+    try {
+        await retryWithBackoff(() => cancelCsgorollTrade(tradeId), label);
+        console.log(`%c${DateFormater(new Date())} | [${label}] Cancelled ${marketName} (was ${data.currentMarkup}%)`, noticeCSSlog);
+
+        delete decayTrackedTrades[tradeId];
+        await saveDecayState();
+
+        await new Promise(r => setTimeout(r, 3000));
+
+        const invItem = itemsList.find(i => i.steamExternalId === data.steamExternalAssetId);
+        if (!invItem) {
+            console.log(`%c${DateFormater(new Date())} | [${label}] Item not found in inventory: ${marketName}`, errorCSSlog);
+            sendPushoverNotification(`[${label} FAILED]: Item not in inventory\n${marketName}`, { priority: emergencyAlerts ? 2 : 1 });
+            return;
+        }
+
+        const relistValue = data.baseValue * (1 + newMarkup / 100);
+        const newTrade = await retryWithBackoff(() => relistDeposit(invItem.assetID, data.itemVariantId, relistValue), label);
+
+        decayTrackedTrades[newTrade.id] = {
+            ...data,
+            tradeId: newTrade.id,
+            currentMarkup: newMarkup,
+            lastDecayAt: new Date().toISOString(),
+        };
+        await saveDecayState();
+
+        console.log(`%c${DateFormater(new Date())} | [${label}] ${marketName} relisted: ${data.currentMarkup}% -> ${newMarkup}% (${relistValue.toFixed(2)} coins)`, steamOfferCSSlog);
+
+        if (depoAlert) {
+            notifyPushover(`[${label}]: ${marketName}\n${data.currentMarkup}% -> ${newMarkup}%\n${relistValue.toFixed(2)} coins`, 0);
+        }
+    } catch (err) {
+        console.log(`%c${DateFormater(new Date())} | [${label} ERROR] ${marketName}: ${err.message}`, errorCSSlog);
+        sendPushoverNotification(`[${label} FAILED]: ${marketName}\n${err.message}`, { priority: emergencyAlerts ? 2 : 1 });
+    }
+}
 
 let steam_access_token;
 let token_expiration;
@@ -68,7 +279,7 @@ setInterval(async() => {
     if (token_steam_update_errors > TOKEN_STEAM_MAX_ERRORS) {
         TOKEN_STEAM_MAX_ENABLED = false;
         sendPushoverNotification(`[STEAM_TOKEN_UPDATER]\nThe automatic steam token updater has been disabled due to errors.`, {
-            priority:2
+            priority: emergencyAlerts ? 2 : 0
         });
     };
 
@@ -267,6 +478,9 @@ const initRollhelper = async () => {
         rates = await fetchRates();
         await getCurrentSteamInvData(userID);
         await updateSettings();
+        await loadDecayState();
+        await seedDecayFromListedTrades();
+        setInterval(checkMarkupDecay, DECAY_CHECK_INTERVAL);
         prices = await loadCSP();
         await initConnection();
     } catch (error) {
@@ -341,6 +555,7 @@ function connectWSS() {
 
         setTimeout(() => {
             enqueueMessage(JSON.stringify(updateTradePayload))
+            enqueueMessage(JSON.stringify(createTradePayload))
         }, 2500);
 
         setTimeout(() => {
@@ -362,15 +577,36 @@ function connectWSS() {
             return;
         }
 
+        if (data?.payload?.data?.createTrades) {
+            const trades = data.payload.data.createTrades.trades;
+            if (trades) {
+                for (const trade of trades) {
+                    if (trade.status === 'LISTED') {
+                        trackForMarkupDecay(trade);
+                    }
+                }
+            }
+            return;
+        }
+
         if (!data?.payload?.data?.updateTrade) return;
 
         const trade = data.payload.data.updateTrade.trade;
-        if (!trade || !trade.withdrawer) return;
+        if (!trade) return;
 
         const status = trade.status;
         const side = getTradeSide(trade);
-        const tradeItem = getTradeItem(trade);
 
+        // Markup decay tracking for our deposits
+        if (status === 'LISTED') {
+            trackForMarkupDecay(trade);
+        } else {
+            untrackMarkupDecay(trade.id);
+        }
+
+        if (!trade.withdrawer) return;
+
+        const tradeItem = getTradeItem(trade);
         trackTrade(trade, status, side);
 
         switch (status) {
@@ -445,6 +681,57 @@ function connectWSS() {
     };
 }
 
+// DEPOSIT SAFEGUARD
+function checkDepositSafeguard(tradeItem) {
+    if (!depositSafeguard || !prices) return null;
+
+    const baseValue = tradeItem.itemVariant?.value;
+    if (!baseValue) return null;
+
+    let lookupName = tradeItem.marketName;
+    if (isDoppler(lookupName)) lookupName = refactorDopplerNameForPE(lookupName);
+
+    const priceObj = prices[lookupName];
+    if (!priceObj) return null;
+
+    const rate = 0.66;
+    const candidates = {};
+
+    if (priceObj.price_buff != null) candidates.buff = priceObj.price_buff / 100;
+    if (priceObj.price_csfloat != null) candidates.csfloat = priceObj.price_csfloat / 100;
+    if (priceObj.price_uu != null) candidates.youpin = priceObj.price_uu / 100;
+
+    let marketUsd = null;
+    let marketLabel = safeguardMarket;
+
+    if (safeguardMarket === 'lowest') {
+        const vals = Object.entries(candidates).filter(([, v]) => v > 0);
+        if (vals.length > 0) {
+            const [label, price] = vals.reduce((a, b) => a[1] < b[1] ? a : b);
+            marketUsd = price;
+            marketLabel = label;
+        }
+    } else {
+        marketUsd = candidates[safeguardMarket] || null;
+    }
+
+    if (!marketUsd || marketUsd <= 0) return null;
+
+    const rollUsd = baseValue * rate;
+    const delta = ((rollUsd / marketUsd) - 1) * 100;
+
+    if (delta < -safeguardThreshold) {
+        return {
+            delta: Number(delta.toFixed(1)),
+            market: marketLabel,
+            marketUsd: Number(marketUsd.toFixed(2)),
+            rollUsd: Number(rollUsd.toFixed(2)),
+        };
+    }
+
+    return null;
+}
+
 // EVENT HANDLERS
 function handleJoined(trade, side, tradeItem, data) {
     if (!tradeItem) return;
@@ -453,8 +740,23 @@ function handleJoined(trade, side, tradeItem, data) {
     const markup = tradeItem.markupPercent;
 
     if (side === 'deposit') {
-        if (depoAutoAccept) {
-            fetchAcceptTrade(trade.id);
+        const safeguardHit = checkDepositSafeguard(tradeItem);
+
+        if (safeguardHit) {
+            const sgLog = `[SAFEGUARD BLOCKED]\n${marketName}\nBase: $${safeguardHit.rollUsd} | ${safeguardHit.market}: $${safeguardHit.marketUsd} (${safeguardHit.delta}%)`;
+            console.log(`%c${DateFormater(new Date())} | ${sgLog}`, errorCSSlog);
+
+            notifyPushover(`[SAFEGUARD BLOCKED]: ${marketName}\nCSGORoll: $${safeguardHit.rollUsd} vs ${safeguardHit.market}: $${safeguardHit.marketUsd}\nDelta: ${safeguardHit.delta}%\nAuto-accept skipped!`, {
+                priority: emergencyAlerts ? 2 : 1
+            });
+            notifyDiscord('SafeguardBlocked', {
+                marketname: marketName,
+                value: value,
+                markup: markup,
+                iconUrl: tradeItem.itemVariant?.iconUrl || '',
+            });
+        } else if (depoAutoAccept) {
+            retryWithBackoff(() => fetchAcceptTrade(trade.id), 'ACCEPT-TRADE');
         }
 
         const info = buildTradeInfo(trade, tradeItem, 'deposit');
@@ -483,7 +785,7 @@ function handleProcessing(trade, side, tradeItem, data) {
     const marketName = tradeItem.marketName;
 
     if (side === 'deposit') {
-        // We are the depositor — send Steam offer if enabled
+        // We are the depositor, send Steam offer if enabled
         if (sendSteamOffers) {
             const itemID = tradeItem.itemVariant?.itemId;
             const tradeLink = data.payload.data.updateTrade.trade.withdrawerSteamTradeUrl;
@@ -492,8 +794,17 @@ function handleProcessing(trade, side, tradeItem, data) {
             let found = false;
             for (const item of itemsList) {
                 if (item.itemID === itemID && item.steamExternalId === externalSteamId) {
-                    sendSteamTradeOffer(item.assetID, tradeLink, offerMessage);
-                    console.log(`%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer sent]`, steamOfferCSSlog);
+                    retryWithBackoff(() => sendSteamTradeOffer(item.assetID, tradeLink, offerMessage), 'STEAM-OFFER')
+                        .then(steamOfferId => {
+                            console.log(`%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer sent] (offerid: ${steamOfferId})`, steamOfferCSSlog);
+                            savePendingOffer(trade.id, steamOfferId);
+                        })
+                        .catch(err => {
+                            console.log(`%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer send failed: ${err.message}]`, errorCSSlog);
+                            sendPushoverNotification(`[STEAM-OFFER-ERROR]: Failed to send offer\n${marketName}\n${err.message}`, {
+                                priority: emergencyAlerts ? 2 : STEAM_OFFER_ERROR_PRIORITY
+                            });
+                        });
                     found = true;
                     break;
                 }
@@ -502,13 +813,12 @@ function handleProcessing(trade, side, tradeItem, data) {
             if (!found) {
                 console.log(`%c${DateFormater(new Date())} | [ROLLHELPER - Steam offer error (item not found)]`, errorCSSlog);
                 sendPushoverNotification(`[STEAM-OFFER-ERROR]: Item has not been sent (not found)\n ${marketName}`, {
-                    priority: STEAM_OFFER_ERROR_PRIORITY
+                    priority: emergencyAlerts ? 2 : STEAM_OFFER_ERROR_PRIORITY
                 });
             }
         }
 
     } else {
-        // We are the withdrawer — trade accepted by depositor
         const info = buildTradeInfo(trade, tradeItem, 'deposit');
 
         const log_string = `[WITHDRAW - ACCEPTED]\n${marketName}\n${formatPricingLog(info)}`;
@@ -534,6 +844,8 @@ function handleCompleted(trade, side, tradeItem) {
         notifyPushover(log_string, completedNotifPriority);
         notifyDiscord('TradeCompleted', info);
     }
+
+    removePendingOffer(trade.id);
 }
 
 function handleCompletedProtected(trade, side, tradeItem) {
@@ -549,6 +861,95 @@ function handleCompletedProtected(trade, side, tradeItem) {
     if (depoAlert) {
         notifyPushover(log_string, protectedNotifPriority);
         notifyDiscord('protectedDeposit', info);
+    }
+
+    removePendingOffer(trade.id);
+}
+
+const COOLDOWN_RELIST_DELAY = 45 * 60 * 1000; // 45min
+
+function scheduleRelistAfterCooldown(trade, tradeItem) {
+    if (!autoRelist) return;
+    const marketName = tradeItem?.marketName || 'Unknown';
+    const delayMin = (COOLDOWN_RELIST_DELAY / 60000).toFixed(0);
+
+    console.log(`%c${DateFormater(new Date())} | [AUTO-RELIST] ${marketName} scheduled for relist in ${delayMin}m (after cooldown)`, noticeCSSlog);
+
+    if (depoAlert) {
+        notifyPushover(`[AUTO-RELIST SCHEDULED]: ${marketName}\nWill relist in ${delayMin} minutes (cooldown)`, 0);
+    }
+
+    setTimeout(() => {
+        autoRelistDeposit(trade, tradeItem, 'COOLDOWN');
+    }, COOLDOWN_RELIST_DELAY);
+}
+
+async function autoRelistDeposit(trade, tradeItem, reason) {
+    if (!autoRelist) return;
+    if (!tradeItem) return;
+
+    const marketName = tradeItem.marketName;
+    const steamExternalId = tradeItem.steamExternalAssetId;
+    const itemVariantId = tradeItem.itemVariant?.id;
+    const baseValue = tradeItem.itemVariant?.value;
+    const markup = tradeItem.markupPercent;
+
+    if (!itemVariantId || !baseValue) {
+        console.log(`%c${DateFormater(new Date())} | [AUTO-RELIST] Missing item data for ${marketName}`, errorCSSlog);
+        return;
+    }
+
+    const invItem = itemsList.find(i => i.steamExternalId === steamExternalId);
+    if (!invItem) {
+        console.log(`%c${DateFormater(new Date())} | [AUTO-RELIST] Item not found in inventory: ${marketName}`, errorCSSlog);
+        sendPushoverNotification(`[AUTO-RELIST FAILED]: Item not in inventory\n${marketName}`, {
+            priority: emergencyAlerts ? 2 : 0
+        });
+        return;
+    }
+
+    const relistValue = baseValue * (1 + markup / 100);
+
+    try {
+        const newTrade = await retryWithBackoff(() => relistDeposit(invItem.assetID, itemVariantId, relistValue), 'AUTO-RELIST');
+        console.log(`%c${DateFormater(new Date())} | [AUTO-RELIST] ${marketName} relisted at ${markup}% markup (${relistValue.toFixed(2)} coins) [reason: ${reason}]`, steamOfferCSSlog);
+
+        if (depoAlert) {
+            notifyPushover(`[AUTO-RELIST]: ${marketName}\n${relistValue.toFixed(2)} coins (${markup}%)\nReason: ${reason}`, 0);
+            notifyDiscord('TradeRelisted', {
+                marketname: marketName,
+                value: relistValue,
+                markup: markup,
+                iconUrl: tradeItem.itemVariant?.iconUrl || '',
+            });
+        }
+    } catch (err) {
+        console.log(`%c${DateFormater(new Date())} | [AUTO-RELIST ERROR] ${marketName}: ${err.message}`, errorCSSlog);
+        sendPushoverNotification(`[AUTO-RELIST FAILED]: ${marketName}\n${err.message}`, {
+            priority: emergencyAlerts ? 2 : 1
+        });
+    }
+}
+
+async function autoCancelPendingSteamOffer(trade, marketName) {
+    if (!autoCancelOffers) return;
+    const steamOfferId = await removePendingOffer(trade.id);
+    if (!steamOfferId) return;
+
+    try {
+        await retryWithBackoff(() => cancelSteamTradeOffer(steamOfferId), 'AUTO-CANCEL');
+        console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL] Steam offer ${steamOfferId} cancelled for ${marketName}`, steamOfferCSSlog);
+        sendPushoverNotification(`[AUTO-CANCEL]: Steam offer cancelled\n${marketName}\nOffer ID: ${steamOfferId}`);
+    } catch (err) {
+        const alreadyInactive = err.message.includes('status 500') || err.message.includes('"success"');
+        if (alreadyInactive) {
+            console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL] Offer ${steamOfferId} already inactive for ${marketName}`, noticeCSSlog);
+        } else {
+            console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL ERROR] Failed to cancel offer ${steamOfferId}: ${err.message}`, errorCSSlog);
+            sendPushoverNotification(`[AUTO-CANCEL-ERROR]: Failed to cancel steam offer\n${marketName}\n${err.message}`, {
+                priority: emergencyAlerts ? 2 : 1
+            });
+        }
     }
 }
 
@@ -570,6 +971,9 @@ function handleCooldown(trade, side, tradeItem) {
             iconUrl: tradeItem.itemVariant?.iconUrl || '',
         });
     }
+
+    autoCancelPendingSteamOffer(trade, marketName);
+    if (side === 'deposit') scheduleRelistAfterCooldown(trade, tradeItem);
 }
 
 function handleCancelled(trade, side, tradeItem) {
@@ -579,6 +983,11 @@ function handleCancelled(trade, side, tradeItem) {
 
     const log_string = `[TRADE - CANCELLED]\n${marketName}\n${value} coins | (${markup}%)`;
     console.log(`%c${DateFormater(new Date())} | ${log_string}`, errorCSSlog);
+
+    autoCancelPendingSteamOffer(trade, marketName);
+    if (side === 'deposit' && trade.cancelReason !== 'USER_CANCELLED') {
+        autoRelistDeposit(trade, tradeItem, 'CANCELLED');
+    }
 }
 
 function handleExpired(trade, side, tradeItem) {
@@ -588,6 +997,9 @@ function handleExpired(trade, side, tradeItem) {
 
     const log_string = `[TRADE - EXPIRED]\n${marketName}\n${value} coins | (${markup}%)`;
     console.log(`%c${DateFormater(new Date())} | ${log_string}`, errorCSSlog);
+
+    autoCancelPendingSteamOffer(trade, marketName);
+    if (side === 'deposit') autoRelistDeposit(trade, tradeItem, 'EXPIRED');
 }
 
 function disconnect() {
