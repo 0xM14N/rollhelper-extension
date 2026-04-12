@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
 	"description": "Trading automation extension for cs2 traders",
-	"version": "1.4",
+	"version": "1.4.1",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -60,7 +60,7 @@
 		"https://www.csgoroll.gg/*",
 		"https://cspricebase.com/*",
 		"https://cspricebase.com/profile",
-		"*://steamcommunity.com/*",
+		"*://steamcommunity.com/*"
 	],
 	"web_accessible_resources": [
 		{

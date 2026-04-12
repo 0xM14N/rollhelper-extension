@@ -124,21 +124,22 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 });
 
 async function refreshCsPriceBase() {
-	const API_URL = `https://cspricebase.com/api/get-rollhelper-prices/`;
+	const API_URL = `https://cspricebase.com/api/get-rollhelper-prices`;
 	const EXTENSION_CACHE_DURATION = 20 * 60 * 1000;
 
-	const { pricing_timestamp, pricing_etag, pricing_data, apiKey } =
+	const { pricing_timestamp, pricing_etag, pricing_data } =
 		await chrome.storage.local.get([
 			'pricing_timestamp',
 			'pricing_etag',
 			'pricing_data',
-			'apiKey'
 		]);
 
-	if (!apiKey) return;
+	const { cspApi } = await chrome.storage.sync.get("cspApi")
+
+	if (!cspApi) return;
 
 	const headers = {
-		Authorization: `Bearer ${apiKey}`
+		Authorization: `Bearer ${cspApi}`
 	};
 
 	if (pricing_etag) {
@@ -719,7 +720,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 		case 'cspricebase':
 			(async () => {
 				try {
-					const API_URL = `https://cspricebase.com/api/get-rollhelper-prices/`;
+					const API_URL = `https://cspricebase.com/api/get-rollhelper-prices`;
 
 					const EXTENSION_CACHE_DURATION =  20 * 60 * 1000; // 15 mins
 					const apiKey = msg.key;
