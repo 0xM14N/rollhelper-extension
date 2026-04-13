@@ -270,7 +270,12 @@ let TOKEN_STEAM_MAX_ENABLED = true;
 
 
 setInterval(async() => {
-    await getUserID();
+    try {
+        await getUserID();
+    } catch (e) {
+        console.log(`[STEAM TOKEN CHECK]: getUserID failed: ${e.message}`);
+        return;
+    }
 
     let now = new Date();
     const expiryDate = token_expiration ? new Date(token_expiration) : null;
@@ -653,7 +658,6 @@ function connectWSS() {
         if (pi)  clearInterval(pI);
 
         console.error('WebSocket error:', error);
-        setTimeout(connectWSS, 62000);
     };
 
     socket.onclose = (event) => {

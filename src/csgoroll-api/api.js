@@ -62,6 +62,13 @@ const updateAccessToken = async () => {
 		}
 
 		console.log('[STEAM_TOKEN_UPDATED]: The token has been successfully updated.')
+
+		try {
+			await getUserID();
+			token_steam_update_errors = 0;
+		} catch (e) {
+			console.log(`[STEAM_TOKEN_UPDATE]: Token updated but failed to refresh local state: ${e.message}`);
+		}
 	});
 };
 

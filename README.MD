@@ -24,6 +24,13 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
+### v1.4.1 — 2026-04-13
+
+**Fixed**
+- Steam token auto-updater loop silently failing — unhandled rejection in `getUserID()` was aborting the expiration check entirely
+- Token refresh not applying locally — `updateAccessToken` now re-fetches user state after a successful mutation so the content script picks up the new token and expiration immediately
+- WebSocket double-reconnect storm — removed duplicate reconnect timer from `onerror` handler (already handled by `onclose`), which was causing "Subscriber already exists" and "Too many messages" rate-limit disconnects
+
 ### v1.4 — 2026-04-11
 
 **Added**
