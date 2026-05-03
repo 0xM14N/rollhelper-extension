@@ -10,7 +10,6 @@ tradeTracker.init();
 activeWs = new Set();
 
 const MAX_STEAM_INV_RETRIES = 10;
-
 const STEAM_DNR_RULE_ID = 9999;
 
 async function getSteamSession() {
@@ -80,21 +79,120 @@ async function getSessionCookie() {
 	return sessionCookie || null;
 }
 
-async function getSteamAccessToken() {
-	const res = await fetch('https://steamcommunity.com/pointssummary/ajaxgetasyncconfig', {
-		credentials: 'include'
+async function getSteamAccessTokenViaFetch() {
+	const MAX_ATTEMPTS = 5;
+	const BACKOFFS_MS = [0, 800, 1600, 3000, 5000];
+
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+		if (BACKOFFS_MS[attempt - 1] > 0) {
+			await new Promise(r => setTimeout(r, BACKOFFS_MS[attempt - 1]));
+		}
+
+		const url = `https://steamcommunity.com/pointssummary/ajaxgetasyncconfig?_=${Date.now()}-${attempt}`;
+		const res = await fetch(url, {
+			credentials: 'include',
+			cache: 'no-store',
+			headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+		});
+
+		if (!res.ok) {
+			throw new Error(`Steam ajaxgetasyncconfig failed with status ${res.status}`);
+		}
+
+		const json = await res.json();
+		if (json.success && json.data?.webapi_token) {
+			return json.data.webapi_token;
+		}
+	}
+
+	return null;
+}
+
+async function getSteamAccessTokenViaTab() {
+	const TIMEOUT_MS = 20000;
+
+	return new Promise((resolve, reject) => {
+		const url = `https://steamcommunity.com/pointssummary/ajaxgetasyncconfig`;
+		let settled = false;
+		let createdTabId = null;
+		let timeoutHandle = null;
+
+		const cleanup = () => {
+			chrome.tabs.onUpdated.removeListener(listener);
+			if (timeoutHandle) {
+				clearTimeout(timeoutHandle);
+				timeoutHandle = null;
+			}
+			if (createdTabId != null) {
+				try {
+					chrome.tabs.remove(createdTabId, () => void chrome.runtime.lastError);
+				} catch (_) { /* tab may already be gone */ }
+			}
+		};
+
+		const finish = (err, token) => {
+			if (settled) return;
+			settled = true;
+			cleanup();
+			if (err) reject(err);
+			else resolve(token);
+		};
+
+		const extractToken = (tabId) => {
+			chrome.scripting.executeScript({
+				target: { tabId },
+				func: () => document.body?.innerText || ''
+			}, (results) => {
+				if (chrome.runtime.lastError) {
+					finish(new Error(chrome.runtime.lastError.message));
+					return;
+				}
+				const text = results?.[0]?.result || '';
+				try {
+					const json = JSON.parse(text);
+					if (json.success && json.data?.webapi_token) {
+						finish(null, json.data.webapi_token);
+						return;
+					}
+				} catch (_) { /* fall through */ }
+				finish(new Error('Failed to parse Steam webapi_token from tab response'));
+			});
+		};
+
+		const listener = (updatedTabId, info) => {
+			if (updatedTabId !== createdTabId || info.status !== 'complete') return;
+			extractToken(updatedTabId);
+		};
+
+		chrome.tabs.onUpdated.addListener(listener);
+
+		chrome.tabs.create({ url, active: false }, (tab) => {
+			if (chrome.runtime.lastError || !tab || tab.id == null) {
+				finish(new Error(chrome.runtime.lastError?.message || 'Failed to create Steam tab'));
+				return;
+			}
+			createdTabId = tab.id;
+			timeoutHandle = setTimeout(
+				() => finish(new Error('Timed out waiting for Steam tab to load')),
+				TIMEOUT_MS
+			);
+			if (tab.status === 'complete') {
+				extractToken(createdTabId);
+			}
+		});
 	});
+}
 
-	if (!res.ok) {
-		throw new Error(`Steam ajaxgetasyncconfig failed with status ${res.status}`);
+async function getSteamAccessToken() {
+	try {
+		const token = await getSteamAccessTokenViaFetch();
+		if (token) return token;
+		console.log('[STEAM_TOKEN]: fetch method returned no token, falling back to tab method...');
+	} catch (e) {
+		console.log(`[STEAM_TOKEN]: fetch method failed (${e.message}), falling back to tab method...`);
 	}
 
-	const json = await res.json();
-	if (!json.success || !json.data?.webapi_token) {
-		throw new Error('Failed to get Steam webapi_token - are you logged into Steam in this browser?');
-	}
-
-	return json.data.webapi_token;
+	return await getSteamAccessTokenViaTab();
 }
 
 
@@ -551,6 +649,8 @@ chrome.runtime.onInstalled.addListener(details => {
 				peApi: null,
 				switchDepoState: false,
 				wantAutoRelist: false,
+				wantAutoTokenUpdate: true,
+				wantAutoTokenUpdateState: true,
 				switchNotifyState: false,
 				token: null,
 				userkey: null,

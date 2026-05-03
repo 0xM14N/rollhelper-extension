@@ -27,6 +27,7 @@ const updateSettings = async () => {
 		{ wantAutoCancelOffers },
 		{ wantEmergencyAlerts },
 		{ wantAutoRelist },
+		{ wantAutoTokenUpdate },
 		{ wantMarkupDecay },
 		{ markupDecayPercent: storedDecayPercent },
 		{ markupDecayInterval: storedDecayInterval },
@@ -66,6 +67,7 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['wantAutoCancelOffers']),
 		chrome.storage.sync.get(['wantEmergencyAlerts']),
 		chrome.storage.sync.get(['wantAutoRelist']),
+		chrome.storage.sync.get(['wantAutoTokenUpdate']),
 		chrome.storage.sync.get(['wantMarkupDecay']),
 		chrome.storage.sync.get(['markupDecayPercent']),
 		chrome.storage.sync.get(['markupDecayInterval']),
@@ -108,6 +110,7 @@ const updateSettings = async () => {
 	autoCancelOffers = wantAutoCancelOffers
 	emergencyAlerts = wantEmergencyAlerts
 	autoRelist = wantAutoRelist
+	autoTokenUpdate = wantAutoTokenUpdate ?? true
 	markupDecayEnabled = wantMarkupDecay
 	markupDecayAmount = Number(storedDecayPercent) || 10
 	markupDecayIntervalHours = Number(storedDecayInterval) || 4

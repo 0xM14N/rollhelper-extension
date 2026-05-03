@@ -14,6 +14,7 @@ let switchDepo = document.getElementById('depoSwitch');
 let sendOfferSwitch = document.getElementById('sendOfferSwitch');
 let autoCancelSwitch = document.getElementById('autoCancelSwitch');
 let autoRelistSwitch = document.getElementById('autoRelistSwitch');
+let autoTokenSwitch = document.getElementById('autoTokenSwitch');
 let steamMsgInput = document.getElementById('steamOfferMessageInput');
 let sessionBtn = document.getElementById('copy-session-btn');
 
@@ -89,8 +90,8 @@ saveBtn.addEventListener('click', async function () {
 	if (val !== '') {
 		await chrome.storage.sync.set({ steamOfferMessage: val });
 	}
-	callUpdateStorage();
-	window.close();
+	await callUpdateStorage();
+	flashSaved(saveBtn);
 });
 
 sendOfferSwitch.addEventListener('change', function () {
@@ -111,6 +112,13 @@ autoRelistSwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({
 		wantAutoRelistState: this.checked,
 		wantAutoRelist: this.checked,
+	}, () => callUpdateStorage());
+});
+
+autoTokenSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({
+		wantAutoTokenUpdateState: this.checked,
+		wantAutoTokenUpdate: this.checked,
 	}, () => callUpdateStorage());
 });
 
@@ -153,19 +161,19 @@ saveDepositsBtn.addEventListener('click', async function () {
 		safeguardThresholdVal: safeguardThresholdInput.value,
 		safeguardMarketVal: safeguardMarketSelect.value,
 	});
-	callUpdateStorage();
-	window.close();
+	await callUpdateStorage();
+	flashSaved(saveDepositsBtn);
 });
 
 // =====================
 // NOTIFICATIONS PAGE
 // =====================
 switchNotify.addEventListener('change', function () {
-	chrome.storage.sync.set({ switchNotifyState: this.checked });
+	chrome.storage.sync.set({ switchNotifyState: this.checked }, () => callUpdateStorage());
 });
 
 dcNotify.addEventListener('change', function () {
-	chrome.storage.sync.set({ dcNotifyState: this.checked });
+	chrome.storage.sync.set({ dcNotifyState: this.checked }, () => callUpdateStorage());
 });
 
 depoAlertSwitch.addEventListener('change', function () {
@@ -211,52 +219,58 @@ emergencySwitch.addEventListener('change', function () {
 });
 
 saveNotifBtn.addEventListener('click', async function () {
-	let promises = [];
+	const settings = {
+		depoPushoverPriority: depositPriorityInput.value,
+		withdrawPushoverPriority: withdrawPriorityInput.value,
+		cooldownPushoverPriority: cooldownPriorityInput.value,
+		completedPushoverPriority: completedPriorityInput.value,
+		protectedPushoverPriority: protectedPriorityInput.value,
+		reversalPushoverPriority: reversalPriorityInput.value,
+		switchNotifyState: switchNotify.checked,
+		dcNotifyState: dcNotify.checked,
+	};
+	if (inputToken.value !== '') settings.token = inputToken.value;
+	if (inputUsrkey.value !== '') settings.userkey = inputUsrkey.value;
+	if (dcWebhook.value !== '') settings.webhook = dcWebhook.value;
 
-	promises.push(chrome.storage.sync.set({ depoPushoverPriority: depositPriorityInput.value }));
-	promises.push(chrome.storage.sync.set({ withdrawPushoverPriority: withdrawPriorityInput.value }));
-	promises.push(chrome.storage.sync.set({ cooldownPushoverPriority: cooldownPriorityInput.value }));
-	promises.push(chrome.storage.sync.set({ completedPushoverPriority: completedPriorityInput.value }));
-	promises.push(chrome.storage.sync.set({ protectedPushoverPriority: protectedPriorityInput.value }));
-	promises.push(chrome.storage.sync.set({ reversalPushoverPriority: reversalPriorityInput.value }));
-
-	if (inputToken.value !== '') promises.push(chrome.storage.sync.set({ token: inputToken.value }));
-	if (inputUsrkey.value !== '') promises.push(chrome.storage.sync.set({ userkey: inputUsrkey.value }));
-	if (dcWebhook.value !== '') promises.push(chrome.storage.sync.set({ webhook: dcWebhook.value }));
-
-	await Promise.all(promises);
-	callUpdateStorage();
-	window.close();
+	await chrome.storage.sync.set(settings);
+	await callUpdateStorage();
+	if (inputToken.value !== '') { inputToken.value = ''; inputToken.placeholder = '*******'; }
+	if (inputUsrkey.value !== '') { inputUsrkey.value = ''; inputUsrkey.placeholder = '*******'; }
+	if (dcWebhook.value !== '') { dcWebhook.value = ''; dcWebhook.placeholder = '*******'; }
+	flashSaved(saveNotifBtn);
 });
 
 // =====================
 // DASHBOARD PAGE
 // =====================
 trackingSwitch.addEventListener('change', function () {
-	chrome.storage.sync.set({ enableTracking: this.checked });
+	chrome.storage.sync.set({ enableTracking: this.checked }, () => callUpdateStorage());
 });
 
 saveTrackingBtn.addEventListener('click', async function () {
-	if (trackingKeyInput.value !== '') {
-		await chrome.storage.sync.set({ trackingApiKey: trackingKeyInput.value });
-	}
-	callUpdateStorage();
-	window.close();
+	const settings = { enableTracking: trackingSwitch.checked };
+	if (trackingKeyInput.value !== '') settings.trackingApiKey = trackingKeyInput.value;
+	await chrome.storage.sync.set(settings);
+	await callUpdateStorage();
+	if (trackingKeyInput.value !== '') { trackingKeyInput.value = ''; trackingKeyInput.placeholder = '*******'; }
+	flashSaved(saveTrackingBtn);
 });
 
 // =====================
 // PRICING PAGE
 // =====================
 pricingSwitch.addEventListener('change', function () {
-	chrome.storage.sync.set({ enablePricingOverlay: this.checked });
+	chrome.storage.sync.set({ enablePricingOverlay: this.checked }, () => callUpdateStorage());
 });
 
 savePricingBtn.addEventListener('click', async function () {
-	if (cspApiKeyInput.value !== '') {
-		await chrome.storage.sync.set({ cspApi: cspApiKeyInput.value });
-	}
-	callUpdateStorage();
-	window.close();
+	const settings = { enablePricingOverlay: pricingSwitch.checked };
+	if (cspApiKeyInput.value !== '') settings.cspApi = cspApiKeyInput.value;
+	await chrome.storage.sync.set(settings);
+	await callUpdateStorage();
+	if (cspApiKeyInput.value !== '') { cspApiKeyInput.value = ''; cspApiKeyInput.placeholder = '*******'; }
+	flashSaved(savePricingBtn);
 });
 
 // =====================
@@ -264,7 +278,7 @@ savePricingBtn.addEventListener('click', async function () {
 // =====================
 function restoreAll() {
 	chrome.storage.sync.get([
-		'switchDepoState', 'wantSendOffersState', 'wantAutoCancelOffersState', 'wantAutoRelistState',
+		'switchDepoState', 'wantSendOffersState', 'wantAutoCancelOffersState', 'wantAutoRelistState', 'wantAutoTokenUpdateState',
 		'wantMarkupDecayState', 'markupDecayPercent', 'markupDecayInterval', 'markupDecayFloor',
 		'wantItemDecayState', 'itemDecayPercent', 'itemDecayInterval', 'itemDecayFloor',
 		'wantDepositSafeguardState', 'safeguardThresholdVal', 'safeguardMarketVal',
@@ -284,6 +298,7 @@ function restoreAll() {
 		sendOfferSwitch.checked = res.wantSendOffersState;
 		autoCancelSwitch.checked = res.wantAutoCancelOffersState;
 		autoRelistSwitch.checked = res.wantAutoRelistState;
+		autoTokenSwitch.checked = res.wantAutoTokenUpdateState ?? true;
 		markupDecaySwitch.checked = res.wantMarkupDecayState;
 		decayPercentInput.value = res.markupDecayPercent ?? 10;
 		decayIntervalInput.value = res.markupDecayInterval ?? 4;
@@ -330,8 +345,43 @@ function restoreAll() {
 }
 
 function callUpdateStorage() {
-	chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-		let activeTab = tabs[0];
-		chrome.tabs.sendMessage(activeTab.id, { update: true });
+	return new Promise((resolve) => {
+		chrome.tabs.query({
+			url: [
+				'https://www.csgoroll.com/*',
+				'https://www.csgoroll.gg/*',
+				'https://www.csgorolltr.com/*',
+			],
+		}, (tabs) => {
+			if (chrome.runtime.lastError || !tabs || tabs.length === 0) {
+				resolve();
+				return;
+			}
+			let pending = tabs.length;
+			const done = () => { if (--pending <= 0) resolve(); };
+			for (const tab of tabs) {
+				try {
+					chrome.tabs.sendMessage(tab.id, { update: true }, () => {
+						void chrome.runtime.lastError;
+						done();
+					});
+				} catch (_) {
+					done();
+				}
+			}
+		});
 	});
+}
+
+function flashSaved(btn) {
+	if (!btn) { window.close(); return; }
+	const span = btn.querySelector('span');
+	const original = span ? span.textContent : btn.textContent;
+	if (span) span.textContent = 'Saved!'; else btn.textContent = 'Saved!';
+	btn.disabled = true;
+	setTimeout(() => {
+		if (span) span.textContent = original; else btn.textContent = original;
+		btn.disabled = false;
+		window.close();
+	}, 600);
 }

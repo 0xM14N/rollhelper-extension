@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
 	"description": "Trading automation extension for cs2 traders",
-	"version": "1.4.1",
+	"version": "1.4.3",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -45,26 +45,28 @@
 	],
 	"action": {
 		"default_popup": "src/popup/html/popup.html",
-		"scripts": ["src/popup/js/popup.js"],
 		"default_icon": {
-			"16": "assets/ico/coin-ico.png"
+			"16": "assets/ico/coin-ico.png",
+			"32": "assets/ico/coin-ico.png",
+			"48": "assets/ico/coin-ico-large.png",
+			"128": "assets/ico/coin-ico-large.png"
 		}
 	},
-	"permissions": ["storage", "tabs", "cookies", "alarms", "scripting", "declarativeNetRequest"],
+	"permissions": ["storage", "tabs", "cookies", "alarms", "declarativeNetRequest", "scripting"],
 	"host_permissions": [
 		"https://*.csgoroll.com/*",
 		"https://*.csgoroll.gg/*",
 		"https://*.csgorolltr.com/*",
-		"https://www.csgoroll.com/*",
-		"https://www.csgorolltr.com/*",
-		"https://www.csgoroll.gg/*",
 		"https://cspricebase.com/*",
-		"https://cspricebase.com/profile",
-		"*://steamcommunity.com/*"
+		"https://steamcommunity.com/*"
 	],
 	"web_accessible_resources": [
 		{
-			"matches": ["<all_urls>"],
+			"matches": [
+				"https://*.csgoroll.com/*",
+				"https://*.csgoroll.gg/*",
+				"https://*.csgorolltr.com/*"
+			],
 			"resources": [
 				"assets/rates/rates.json",
 				"assets/ico/csp.png"

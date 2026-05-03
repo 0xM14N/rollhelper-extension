@@ -1,4 +1,4 @@
-let version = `1.4.1`;
+let version = `1.4.3`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -270,6 +270,8 @@ let TOKEN_STEAM_MAX_ENABLED = true;
 
 
 setInterval(async() => {
+    if (autoTokenUpdate === false) return;
+
     try {
         await getUserID();
     } catch (e) {
@@ -281,12 +283,12 @@ setInterval(async() => {
     const expiryDate = token_expiration ? new Date(token_expiration) : null;
 
     if (TOKEN_STEAM_MAX_ENABLED === false) return;
-    if (token_steam_update_errors > TOKEN_STEAM_MAX_ERRORS) {
-        TOKEN_STEAM_MAX_ENABLED = false;
-        sendPushoverNotification(`[STEAM_TOKEN_UPDATER]\nThe automatic steam token updater has been disabled due to errors.`, {
-            priority: emergencyAlerts ? 2 : 0
-        });
-    };
+    // if (token_steam_update_errors > TOKEN_STEAM_MAX_ERRORS) {
+    //     TOKEN_STEAM_MAX_ENABLED = false;
+    //     sendPushoverNotification(`[STEAM_TOKEN_UPDATER]\nThe automatic steam token updater has been disabled due to errors.`, {
+    //         priority: emergencyAlerts ? 2 : 0
+    //     });
+    // };
 
     if ((steam_access_token == null) || (token_expiration == null) || (now > expiryDate)) {
         console.log(`[STEAM TOKEN]: Expired or missing, updating...`);
@@ -300,6 +302,7 @@ setInterval(async() => {
 
 
 const SteamTokenCheck = async () => {
+    if (autoTokenUpdate === false) return;
     let now = new Date();
     if ((steam_access_token == null) || (token_expiration == null) || (now > new Date(token_expiration))) {
         await updateAccessToken();
@@ -781,6 +784,7 @@ function handleJoined(trade, side, tradeItem, data) {
 
         const log_string = `[WITHDRAW - WAITING]\n${marketName}\n${formatPricingLog(info)}`;
         console.log(`%c${DateFormater(new Date())} | ${log_string}`, noticeCSSlog);
+        console.log("%cCS:PRICEBASE - ITEM ➡", cspCSSlog, getCSPUrl(marketName));
     }
 }
 
@@ -828,6 +832,7 @@ function handleProcessing(trade, side, tradeItem, data) {
         const log_string = `[WITHDRAW - ACCEPTED]\n${marketName}\n${formatPricingLog(info)}`;
         console.log(`%c${DateFormater(new Date())} | ${log_string}`, withdrawAcceptedCSSlog);
         console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, info.csp_url);
+        console.log("%cCS:PRICEBASE - ITEM ➡", cspCSSlog, getCSPUrl(marketName));
 
         if (withdrawAlert) {
             notifyPushover(log_string, withdrawNotifPriority);
