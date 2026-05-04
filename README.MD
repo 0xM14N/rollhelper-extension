@@ -24,6 +24,10 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
+### v1.4.5 — 2026-05-04
+- Pricing overlay UI update + popup control for pricing settings
+- version checks for updates in popup
+
 ### v1.4.4 — 2026-05-04
 - Fixed bug which failed to init Websocket connection
 

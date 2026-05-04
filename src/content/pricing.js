@@ -62,7 +62,7 @@ const watchPrices = setInterval(() => {
 }, 1000);
 
 function removeAllOverlays() {
-    document.querySelectorAll('.buff-overlay, .marketname-overlay').forEach(el => el.remove());
+    document.querySelectorAll('.buff-overlay, .marketname-overlay, .rh-coin-usd').forEach(el => el.remove());
     document.querySelectorAll('cw-csgo-market-item-card[data-pricing-injected]').forEach(node => {
         delete node.dataset.pricingInjected;
     });
@@ -73,20 +73,35 @@ function showAllOverlays() {
 }
 
 let lastPricingState = enablePricing;
+let lastPricingPrefsKey = '';
+function pricingPrefsKey() {
+    const m = (typeof pricingMarkets !== 'undefined') ? pricingMarkets : { buff:true, csf:true, uu:true };
+    const inf = (typeof pricingInflatedShown !== 'undefined') ? pricingInflatedShown : true;
+    const liq = (typeof pricingLiquidityShown !== 'undefined') ? pricingLiquidityShown : true;
+    const usd = (typeof pricingUsdPriceShown !== 'undefined') ? pricingUsdPriceShown : true;
+    const rate = getRollUsdRate();
+    return `${m.buff?1:0}${m.csf?1:0}${m.uu?1:0}|${inf?1:0}|${liq?1:0}|${usd?1:0}|${rate}`;
+}
 setInterval(() => {
     if (enablePricing !== lastPricingState) {
         lastPricingState = enablePricing;
 
         if (enablePricing) {
-            // console.log('[RollHelper] Pricing enabled');
             initializePricing();
             showAllOverlays();
         } else {
-            // console.log('[RollHelper] Pricing disabled');
             removeAllOverlays();
         }
     }
-}, 100);
+
+    if (enablePricing) {
+        const k = pricingPrefsKey();
+        if (k !== lastPricingPrefsKey) {
+            lastPricingPrefsKey = k;
+            refreshAllOverlays();
+        }
+    }
+}, 200);
 
 // Initial setup
 if (enablePricing) {
@@ -193,6 +208,7 @@ function refreshAllOverlays() {
             existingOverlay.remove();
         }
         if (existingHeading) existingHeading.remove();
+        node.querySelectorAll('.rh-coin-usd').forEach(el => el.remove());
 
         const data = getPricing(node);
         injectOverlay(node, data);
@@ -397,6 +413,8 @@ function getPricing(item, include_pricing = "true") {
             ) / 100;
     }
 
+    itemInfo.rollPrice = rollPrice;
+
     if (!window.prices || Object.keys(window.prices || {}).length === 0) {
         itemInfo.marketname = itemName;
         itemInfo.noPrices = true;
@@ -452,26 +470,21 @@ function getPricing(item, include_pricing = "true") {
     csf_usd = price_obj?.price_csfloat != null ? price_obj.price_csfloat / 100 : null;
     is_inflated = price_obj?.is_inflated ?? true;
 
-    // buff163
-    let realBuffVal = buff_usd / rate;
-    let buffVal = Math.floor(realBuffVal * 100) / 100;
     const buffDelta = calcDelta(rollPrice, buff_usd, rate);
-
-    // csfloat
-    let realCSFVal = csf_usd / rate;
-    let csfVal = Math.floor(realCSFVal * 100) / 100;
     const csfDelta  = calcDelta(rollPrice, csf_usd, rate);
-
-    // uu delta
-    let realUUVal = uu_usd / rate;
-    let uuVal = Math.floor(realUUVal * 100) / 100;
     let uuDelta  = calcDelta(rollPrice, uu_usd, rate);
 
     if (isDoppler(itemName)) {
         uuDelta = null;
+        uu_usd = null;
     }
 
     itemInfo.marketname = itemName;
+    itemInfo.rollPrice = rollPrice;
+    itemInfo.rate = rate;
+    itemInfo.buffUsd = buff_usd;
+    itemInfo.csfUsd = csf_usd;
+    itemInfo.uuUsd = uu_usd;
     itemInfo.buffDelta = buffDelta;
     itemInfo.csfDelta = csfDelta;
     itemInfo.uuDelta = uuDelta;
@@ -493,14 +506,37 @@ function injectOverlay(node, data) {
     const existingHeading = node.querySelector(':scope > .marketname-overlay');
     if (existingOverlay) existingOverlay.remove();
     if (existingHeading) existingHeading.remove();
+    node.querySelectorAll('.rh-coin-usd').forEach(el => el.remove());
 
     ensurePositioned(node);
 
     const { overlay, heading_overlay } = createOverlay(data);
 
     if (heading_overlay) node.appendChild(heading_overlay);
-
     node.appendChild(overlay);
+
+    injectCoinUsd(node, data);
+}
+
+function injectCoinUsd(node, data) {
+    if (data.rollPrice == null) return;
+
+    const showUsd = (typeof pricingUsdPriceShown !== 'undefined') ? pricingUsdPriceShown : true;
+    if (!showUsd) return;
+
+    const balance = node.querySelector('cw-pretty-balance');
+    if (!balance) return;
+
+    const rate = getRollUsdRate();
+    const usd = data.rollPrice * rate;
+    const label = document.createElement('span');
+    label.className = 'rh-coin-usd';
+    label.textContent = `≈ ${fmtUsd(usd)}`;
+    label.title = `${data.rollPrice.toFixed(2)} coins × ${rate}`;
+
+    // Place directly after the coin balance element so it sits underneath visually
+    const host = balance.parentElement || balance;
+    host.appendChild(label);
 }
 
 function calcDelta(sitePrice, marketUsd, rate) {
@@ -512,133 +548,186 @@ function calcDelta(sitePrice, marketUsd, rate) {
     return Number(delta.toFixed(1));
 }
 
+const ROLL_USD_RATE_DEFAULT = 0.66;
+function getRollUsdRate() {
+    return (typeof pricingUsdRateValue !== 'undefined' && pricingUsdRateValue > 0)
+        ? pricingUsdRateValue
+        : ROLL_USD_RATE_DEFAULT;
+}
+
+const MARKET_META = {
+    buff:  { key: 'buff',  label: 'Buff163',  icon: 'assets/ico/buff_logo.png' },
+    csf:   { key: 'csf',   label: 'CSFloat',  icon: 'assets/ico/csfloat_logo.png' },
+    uu:    { key: 'uu',    label: 'YouPin',   icon: 'assets/ico/uu_logo.png' },
+};
+
+function fmtDelta(d) {
+    if (d == null || Number.isNaN(d)) return '–';
+    const sign = d > 0 ? '+' : '';
+    return `${sign}${d.toFixed(1)}%`;
+}
+
+function fmtUsd(v) {
+    if (v == null || Number.isNaN(v)) return '–';
+    return `$${v.toFixed(2)}`;
+}
+
+function deltaClass(d) {
+    if (d == null || Number.isNaN(d)) return 'rh-neutral';
+    if (d > 0) return 'rh-pos';   // overpriced vs market = bad for buyer (red)
+    return 'rh-neg';              // underpriced = good (green)
+}
+
+function makeMarketRow(meta, usd, delta, coins, cspurl) {
+    const row = document.createElement('a');
+    row.className = `rh-row ${deltaClass(delta)}`;
+    row.href = cspurl;
+    row.target = '_blank';
+    row.rel = 'noopener';
+    row.title = `${meta.label} • ${fmtUsd(usd)}${coins != null ? ` • ${coins.toFixed(2)} coins` : ''} • View on CS:Pricebase`;
+    row.addEventListener('click', e => e.stopPropagation());
+
+    const icon = document.createElement('img');
+    icon.className = 'rh-mkt-ico';
+    icon.src = chrome.runtime.getURL(meta.icon);
+    icon.alt = meta.label;
+
+    const price = document.createElement('span');
+    price.className = 'rh-mkt-price';
+    price.textContent = fmtUsd(usd);
+
+    const deltaEl = document.createElement('span');
+    deltaEl.className = 'rh-mkt-delta';
+    deltaEl.textContent = fmtDelta(delta);
+
+    row.append(icon, price, deltaEl);
+    return row;
+}
+
+function makeCspLink(cspurl) {
+    const link = document.createElement('a');
+    link.className = 'rh-csp-link';
+    link.href = cspurl;
+    link.target = '_blank';
+    link.title = 'View on CS:Pricebase';
+    link.addEventListener('click', e => e.stopPropagation());
+
+    const img = document.createElement('img');
+    img.src = chrome.runtime.getURL('assets/ico/csp.png');
+    img.alt = 'CS:Pricebase';
+    img.className = 'rh-csp-ico';
+    link.appendChild(img);
+    return link;
+}
+
+function liqClass(liq) {
+    if (liq >= 70) return 'rh-liq-high';
+    if (liq >= 40) return 'rh-liq-mid';
+    return 'rh-liq-low';
+}
+
 function createOverlay(data) {
     const overlay = document.createElement('div');
     overlay.className = 'buff-overlay';
 
-    const heading_overlay = document.createElement("div");
+    const heading_overlay = document.createElement('div');
     heading_overlay.className = 'marketname-overlay';
-
-    heading_overlay.style.cursor = 'pointer';
-    heading_overlay.title = 'Click to copy';
+    heading_overlay.title = 'Click to copy market name';
     heading_overlay.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         navigator.clipboard.writeText(data.marketname);
+        heading_overlay.classList.add('rh-copied');
+        setTimeout(() => heading_overlay.classList.remove('rh-copied'), 700);
     });
+    heading_overlay.innerHTML = `<span class="rh-copy-ico">⧉</span><span class="rh-copy-text">copy</span>`;
 
-    heading_overlay.innerHTML = `
-        <div class="heading-overlay">
-            copy
-        </div>
-    `;
+    const container = document.createElement('div');
+    container.className = 'rollhelper-container';
 
-    // Handle case where prices aren't loaded yet
+    // Top-left price stack
+    const stack = document.createElement('div');
+    stack.className = 'rh-stack';
+
     if (data.noPrices) {
-        overlay.innerHTML = `
-        <div class="rollhelper-container">
-            <div class="rollhelper-logo"></div>
-            <div class="price-column">
-                <div class="row delta loading"></div>
-            </div>
-            <div class="liq-column">
-                <div class="row liq">-</div>
-            </div>
-        </div>
-        `;
-
-        const img = document.createElement("img");
-        img.src = chrome.runtime.getURL("assets/ico/csp.png");
-        img.alt = "cs:pricebase";
-        img.width = 30;
-        img.height = 30;
-        img.title = "View on CS:Pricebase"
-
-        const link = document.createElement("a");
-        link.href = data.cspurl;
-        link.target = "_blank";
-        link.appendChild(img);
-
-        img.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        overlay.querySelector(".rollhelper-logo").appendChild(link);
-
+        const loading = document.createElement('div');
+        loading.className = 'rh-row rh-loading';
+        loading.textContent = 'loading…';
+        stack.appendChild(loading);
+        container.append(stack, makeCspLink(data.cspurl));
+        overlay.appendChild(container);
         return { overlay, heading_overlay };
     }
 
     if (data.error) {
-        overlay.innerHTML = `
-        <div class="rollhelper-container">
-            <div class="rollhelper-logo"></div>
-            <div class="price-column">
-                <div class="row delta buff neg">ERROR</div>
-            </div>
-            <div class="liq-column">
-                <div class="row liq">-</div>
-            </div>
-        </div>
-        `;
-
-        const img = document.createElement("img");
-        img.src = chrome.runtime.getURL("assets/ico/csp.png");
-        img.alt = "cs:pricebase";
-        img.width = 35;
-        img.height = 35;
-        img.title = "View on CS:Pricebase"
-
-        const link = document.createElement("a");
-        link.href = data.cspurl;
-        link.target = "_blank";
-        link.appendChild(img);
-
-        img.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        overlay.querySelector(".rollhelper-logo").appendChild(link);
-
+        const err = document.createElement('div');
+        err.className = 'rh-row rh-err';
+        err.textContent = 'no price';
+        stack.appendChild(err);
+        container.append(stack, makeCspLink(data.cspurl));
+        overlay.appendChild(container);
         return { overlay, heading_overlay };
     }
 
-    // main layout
-    overlay.innerHTML = `
-        <div class="rollhelper-container">
-            <div class="rollhelper-logo"></div>
-            <div class="price-column">
-                <div class="row delta buff ${data.buffDelta < 0 ? 'neg' : 'pos'}">
-                    BUFF163: ${data.buffDelta > 0.5 ? `+${data.buffDelta}` : `${data.buffDelta}`}%
-                </div>
-                <div class="row delta csf ${data.csfDelta < 0 ? 'neg' : 'pos'}">
-                    CSFLOAT: ${data.csfDelta > 0.5 ? `+${data.csfDelta}` : `${data.csfDelta}`}%
-                </div>
-                <div class="row delta csf ${data.uuDelta < 0 ? 'neg' : 'pos'}">
-                    YOUPIN: ${data.uuDelta > 0.5 ? `+${data.uuDelta}` : `${data.uuDelta}`}%
-                </div>
-            </div>
-            <div class="liq-column">
-                <div class="row liq">LIQ: ${data.liquidity}%</div>
-            </div>
-        </div>
-    `;
+    const showInflated = (typeof pricingInflatedShown !== 'undefined') ? pricingInflatedShown : true;
+    const visible = (typeof pricingMarkets !== 'undefined')
+        ? pricingMarkets
+        : { buff: true, csf: true, uu: true };
 
-    const img = document.createElement("img");
-    img.src = chrome.runtime.getURL("assets/ico/csp.png");
-    img.alt = "cs:pricebase";
-    img.width = 35;
-    img.height = 35;
+    // hide markups when inflated and toggle off — but keep liquidity / CSP link
+    const hideMarkup = data.isInflated && !showInflated;
 
-    const link = document.createElement("a");
-    link.href = data.cspurl;
-    link.target = "_blank";
-    link.appendChild(img);
+    const rows = [];
+    if (!hideMarkup) {
+        const rate = data.rate || 1;
+        if (visible.buff && data.buffUsd != null) {
+            rows.push(makeMarketRow(MARKET_META.buff, data.buffUsd, data.buffDelta, data.buffUsd / rate, data.cspurl));
+        }
+        if (visible.csf && data.csfUsd != null) {
+            rows.push(makeMarketRow(MARKET_META.csf, data.csfUsd, data.csfDelta, data.csfUsd / rate, data.cspurl));
+        }
+        if (visible.uu && data.uuUsd != null) {
+            rows.push(makeMarketRow(MARKET_META.uu, data.uuUsd, data.uuDelta, data.uuUsd / rate, data.cspurl));
+        }
+    } else {
+        const inflMsg = document.createElement('div');
+        inflMsg.className = 'rh-row rh-inflated-msg';
+        inflMsg.title = 'Markup hidden: prices flagged as inflated.\nEnable "Show inflated" in popup to view.';
+        inflMsg.textContent = 'inflated · hidden';
+        rows.push(inflMsg);
+    }
 
-    img.addEventListener('click', (e) => {
-        e.stopPropagation();
-    });
+    // Inflated badge sits inline next to the first market row
+    if (rows.length > 0 && data.isInflated) {
+        const topLine = document.createElement('div');
+        topLine.className = 'rh-top-line';
+        topLine.appendChild(rows[0]);
 
-    overlay.querySelector(".rollhelper-logo").appendChild(link);
+        const infl = document.createElement('div');
+        infl.className = 'rh-inflated';
+        infl.title = 'Prices flagged as inflated by CS:Pricebase';
+        infl.textContent = '⚠';
+        topLine.appendChild(infl);
+
+        stack.appendChild(topLine);
+        for (let i = 1; i < rows.length; i++) stack.appendChild(rows[i]);
+    } else {
+        rows.forEach(r => stack.appendChild(r));
+    }
+
+    const showLiq = (typeof pricingLiquidityShown !== 'undefined') ? pricingLiquidityShown : true;
+    container.appendChild(stack);
+
+    if (showLiq) {
+        const liqEl = document.createElement('div');
+        liqEl.className = `rh-liq ${liqClass(data.liquidity)}`;
+        liqEl.title = 'Market liquidity';
+        liqEl.innerHTML = `<span class="rh-liq-label">LIQ</span><span class="rh-liq-val">${data.liquidity}%</span>`;
+        container.appendChild(liqEl);
+    }
+
+    container.appendChild(makeCspLink(data.cspurl));
+    overlay.appendChild(container);
 
     return { overlay, heading_overlay };
 }
@@ -650,135 +739,224 @@ function injectStyles() {
     style.id = 'rollhelper-extension-styles';
 
     style.textContent = `
-    /* === RollHelper Overlay Layout === */
-    
+    /* === RollHelper Pricing Overlay === */
+    .buff-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 999;
+        pointer-events: none;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 11px;
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+    }
+    .marketname-overlay {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        z-index: 1000;
+        pointer-events: auto;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 6px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #d1d5db;
+        background: rgba(15, 18, 24, 0.78);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 6px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+    .marketname-overlay:hover {
+        color: #fff;
+        background: rgba(15, 18, 24, 0.92);
+        transform: translateY(-1px);
+    }
+    .marketname-overlay.rh-copied {
+        background: rgba(0, 199, 77, 0.85);
+        color: #fff;
+        border-color: rgba(0, 199, 77, 0.9);
+    }
+    .marketname-overlay .rh-copy-ico { font-size: 11px; line-height: 1; }
+    .marketname-overlay .rh-copy-text { letter-spacing: 0.4px; text-transform: uppercase; font-size: 9px; }
+
     .rollhelper-container {
         position: relative;
         width: 100%;
         height: 100%;
         pointer-events: none;
     }
-    
-    /* Top left - Price column */
-    .price-column {
+
+    /* === Price stack (top-left) === */
+    .rh-stack {
         position: absolute;
         top: 6px;
         left: 6px;
-        
-        display: grid;
-        row-gap: 2px;
-        justify-items: flex-start;
-        text-align: left;
-        
-        background-color: rgba(0, 0, 0, 0.6);
-        border-radius: 8px;
-        padding: 2px 5px;
-        pointer-events: auto;
-    }
-    
-    /* Middle bottom - Liquidity */
-    .liq-column {
-        position: absolute;
-        left: 50%;
-        bottom: 2px;
-        transform: translateX(-50%);
-        
         display: flex;
-        align-items: center;
-        font-size: 10px;
-        
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 8px;
-        padding: 1px 3px;
+        flex-direction: column;
+        gap: 2px;
         pointer-events: auto;
     }
-    
-    /* Bottom right - Logo */
-    .rollhelper-logo {
+
+    .rh-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 6px 2px 3px;
+        background: rgba(15, 18, 24, 0.78);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 999px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        white-space: nowrap;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.15s ease;
+    }
+    a.rh-row { color: inherit; }
+    .rh-row:hover {
+        background: rgba(15, 18, 24, 0.92);
+        transform: translateX(2px);
+    }
+
+    .rh-mkt-ico {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: #fff;
+        padding: 1px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+    }
+
+    .rh-mkt-price {
+        color: #e8eaed;
+        font-weight: 500;
+        font-size: 10.5px;
+    }
+
+    .rh-mkt-delta {
+        font-weight: 700;
+        font-size: 10.5px;
+        letter-spacing: 0.2px;
+    }
+
+    .rh-pos .rh-mkt-delta { color: #ff5c5c; }
+    .rh-neg .rh-mkt-delta { color: #3bd671; }
+    .rh-neutral .rh-mkt-delta { color: #9ca3af; }
+
+    .rh-pos { box-shadow: inset 2px 0 0 #ff5c5c; }
+    .rh-neg { box-shadow: inset 2px 0 0 #3bd671; }
+    .rh-neutral { box-shadow: inset 2px 0 0 #6b7280; }
+
+    .rh-loading {
+        color: #ffeb3b;
+        font-style: italic;
+        font-weight: 500;
+    }
+    .rh-err {
+        color: #ff8a8a;
+        font-weight: 600;
+    }
+    .rh-inflated-msg {
+        color: #ffb347;
+        font-style: italic;
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    /* USD equivalent shown directly under the coin balance on the card */
+    .rh-coin-usd {
+        display: block;
+        margin-top: 1px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #9ca3af;
+        letter-spacing: 0.2px;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+        cursor: help;
+    }
+
+    /* First row + inflated badge inline */
+    .rh-top-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        pointer-events: auto;
+    }
+
+    /* Liquidity pill — bottom-center */
+    .rh-liq {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        background: rgba(15, 18, 24, 0.82);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 600;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        pointer-events: auto;
+    }
+    .rh-liq-label {
+        color: #6b7280;
+        letter-spacing: 0.5px;
+        font-size: 9px;
+    }
+    .rh-liq-val { font-weight: 700; }
+    .rh-liq-high .rh-liq-val { color: #3bd671; }
+    .rh-liq-mid  .rh-liq-val { color: #ffd166; }
+    .rh-liq-low  .rh-liq-val { color: #ff8a8a; }
+
+    .rh-inflated {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+        color: #ffb347;
+        background: rgba(255, 179, 71, 0.15);
+        border: 1px solid rgba(255, 179, 71, 0.4);
+        border-radius: 50%;
+        cursor: help;
+        flex-shrink: 0;
+    }
+
+    /* CSP link — bottom-right */
+    .rh-csp-link {
         position: absolute;
         bottom: 3px;
         right: 3px;
-        
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        padding: 1px;
+        border-radius: 6px;
+        transition: transform 0.15s ease, filter 0.15s ease;
         pointer-events: auto;
     }
-    
-    /* Icon styling */
-    .rollhelper-logo img {
+    .rh-csp-link:hover {
+        transform: scale(1.1);
+        filter: brightness(1.15);
+    }
+    .rh-csp-ico {
+        width: 26px;
+        height: 26px;
         display: block;
         border-radius: 4px;
-        transition: transform 0.15s ease, opacity 0.15s ease;
-    }
-    
-    .rollhelper-logo a:hover img {
-        transform: scale(1.1);
-        opacity: 0.9;
-    }
-    
-    /* === Heading Overlay (Copy button) - Top right === */
-    
-    .heading-overlay {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        z-index: 999;
-        pointer-events: auto;
-        cursor: pointer;
-        
-        font-size: 10px;
-        font-weight: bold;
-        text-align: center;
-        
-        background: rgba(0, 0, 0, 0.7);
-        border-radius: 8px;
-        padding: 1px 3px;
-    }
-    
-    /* === Top Overlay === */
-    
-    .buff-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 999;
-        pointer-events: none;
-        
-        font-size: 11px;
-        line-height: 1.2;
-    }
-    
-    /* Rows */
-    
-    .buff-overlay .row {
-        white-space: nowrap;
-        text-shadow: 
-            -1px -1px 2px rgba(0,0,0,0.8),
-            1px -1px 2px rgba(0,0,0,0.8),
-            -1px 1px 2px rgba(0,0,0,0.8),
-            1px 1px 2px rgba(0,0,0,0.8);
-    }
-    
-    /* Colors */
-    
-    .buff-overlay .pos {
-        color: #ff5c5c;
-    }
-    
-    .buff-overlay .neg {
-        color: #3bd671;
-    }
-    
-    .buff-overlay .liq {
-        color: #00d9ff;
-    }
-    
-    .buff-overlay .loading {
-        color: #ffeb3b;
-        font-style: italic;
     }
 `;
     document.head.appendChild(style);

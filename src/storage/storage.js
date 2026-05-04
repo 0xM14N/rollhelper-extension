@@ -39,6 +39,13 @@ const updateSettings = async () => {
 		{ wantDepositSafeguard },
 		{ safeguardThresholdVal },
 		{ safeguardMarketVal },
+		{ pricingShowBuff },
+		{ pricingShowCsf },
+		{ pricingShowUu },
+		{ pricingShowInflated },
+		{ pricingShowLiquidity },
+		{ pricingShowUsdPrice },
+		{ pricingUsdRate },
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -79,6 +86,13 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['wantDepositSafeguard']),
 		chrome.storage.sync.get(['safeguardThresholdVal']),
 		chrome.storage.sync.get(['safeguardMarketVal']),
+		chrome.storage.sync.get(['pricingShowBuff']),
+		chrome.storage.sync.get(['pricingShowCsf']),
+		chrome.storage.sync.get(['pricingShowUu']),
+		chrome.storage.sync.get(['pricingShowInflated']),
+		chrome.storage.sync.get(['pricingShowLiquidity']),
+		chrome.storage.sync.get(['pricingShowUsdPrice']),
+		chrome.storage.sync.get(['pricingUsdRate']),
 	]);
 
 	offerMessage = steamOfferMessage;
@@ -122,6 +136,16 @@ const updateSettings = async () => {
 	depositSafeguard = wantDepositSafeguard
 	safeguardThreshold = Number(safeguardThresholdVal) || 5
 	safeguardMarket = safeguardMarketVal || 'buff'
+
+	pricingMarkets = {
+		buff: pricingShowBuff ?? true,
+		csf: pricingShowCsf ?? true,
+		uu: pricingShowUu ?? true,
+	}
+	pricingInflatedShown = pricingShowInflated ?? true
+	pricingLiquidityShown = pricingShowLiquidity ?? true
+	pricingUsdPriceShown = pricingShowUsdPrice ?? true
+	pricingUsdRateValue = (Number(pricingUsdRate) > 0) ? Number(pricingUsdRate) : 0.66
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

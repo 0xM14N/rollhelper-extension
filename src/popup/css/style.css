@@ -557,6 +557,246 @@ input:disabled + .slider {
 	width: 280px;
 }
 
+/* ===== Market Grid (Pricing page) ===== */
+.market-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 6px;
+}
+
+.market-cell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 4px;
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 8px;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.market-cell:hover {
+	background: rgba(255, 255, 255, 0.045);
+	border-color: rgba(255, 255, 255, 0.1);
+}
+
+.market-ico {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #fff;
+	padding: 2px;
+	box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+}
+
+.market-label {
+	font-size: 9px;
+	font-weight: 600;
+	color: #c0c4cc;
+	letter-spacing: 0.3px;
+}
+
+.csp-promo-row {
+	flex-direction: row;
+	gap: 8px;
+	padding: 4px 10px;
+	margin-top: auto;
+	font-size: 10px;
+}
+.csp-promo-row .csp-glow {
+	font-size: 12px;
+}
+
+/* USD rate input inside toggle card */
+.toggle-card-with-input {
+	gap: 6px !important;
+	padding: 6px 8px !important;
+}
+.rh-rate-input {
+	width: 42px;
+	padding: 3px 4px;
+	font-size: 10px;
+	text-align: center;
+	background: rgba(255,255,255,0.04);
+	border: 1px solid rgba(255,255,255,0.08);
+	border-radius: 4px;
+	color: #e8eaed;
+	outline: none;
+	font-variant-numeric: tabular-nums;
+}
+.rh-rate-input:focus {
+	border-color: #00c74d;
+}
+.rh-rate-input::-webkit-inner-spin-button,
+.rh-rate-input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+/* Compact overrides for the pricing page */
+.page-pricing-compact { gap: 10px; padding: 16px 20px; }
+.page-pricing-compact .toggle-card.compact { padding: 8px 12px; }
+.page-pricing-compact .controls-grid { gap: 8px; }
+
+.csp-inline {
+	color: #37f300;
+	text-decoration: none;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+}
+.csp-inline:hover {
+	text-shadow: 0 0 8px rgba(55, 243, 0, 0.5);
+}
+
+/* ===== Updates sidebar item ===== */
+.nav-item-updates {
+	margin-top: auto;
+	position: relative;
+}
+
+.nav-badge {
+	margin-left: auto;
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	padding: 2px 5px;
+	background: linear-gradient(135deg, #00c74d 0%, #00a83f 100%);
+	color: #fff;
+	border-radius: 4px;
+	box-shadow: 0 0 8px rgba(0, 199, 77, 0.5);
+}
+
+/* ===== Updates page ===== */
+.update-status {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding: 12px 14px;
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 10px;
+}
+
+.update-status-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 11px;
+}
+
+.update-key {
+	color: #6b7280;
+	letter-spacing: 0.3px;
+	text-transform: uppercase;
+	font-size: 10px;
+	font-weight: 600;
+}
+
+.update-val {
+	color: #e8eaed;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.update-val.is-new {
+	color: #00c74d;
+}
+
+.update-banner {
+	margin-top: 4px;
+	padding: 6px 10px;
+	font-size: 11px;
+	font-weight: 600;
+	border-radius: 6px;
+	text-align: center;
+}
+.update-banner.is-new {
+	background: rgba(0, 199, 77, 0.12);
+	border: 1px solid rgba(0, 199, 77, 0.4);
+	color: #00c74d;
+}
+.update-banner.is-current {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	color: #9ca3af;
+}
+
+.changelog-list {
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 4px 0;
+	max-height: 180px;
+	overflow-y: auto;
+}
+
+.changelog-list li {
+	position: relative;
+	padding: 6px 10px 6px 22px;
+	font-size: 11px;
+	line-height: 1.35;
+	color: #c0c4cc;
+	background: rgba(255, 255, 255, 0.02);
+	border-left: 2px solid rgba(0, 199, 77, 0.5);
+	border-radius: 0 6px 6px 0;
+}
+
+.changelog-list li:before {
+	content: "›";
+	position: absolute;
+	left: 8px;
+	top: 5px;
+	color: #00c74d;
+	font-weight: 700;
+}
+
+.changelog-list .changelog-empty {
+	color: #6b7280;
+	font-style: italic;
+	border-left-color: rgba(255, 255, 255, 0.06);
+}
+.changelog-list .changelog-empty:before { content: ""; }
+
+.update-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: auto;
+}
+
+.modern-button-link {
+	flex: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px 14px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.6px;
+	color: #fff;
+	background: linear-gradient(135deg, #00c74d 0%, #00a83f 100%);
+	border: none;
+	border-radius: 6px;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.modern-button-link:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 199, 77, 0.4);
+}
+.modern-button-link.secondary {
+	background: rgba(255, 255, 255, 0.04);
+	color: #c0c4cc;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.modern-button-link.secondary:hover {
+	background: rgba(255, 255, 255, 0.07);
+	box-shadow: none;
+}
+
 /* ===== CSP Promo ===== */
 .csp-promo {
 	display: flex;

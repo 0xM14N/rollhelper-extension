@@ -37,6 +37,11 @@
 				<span class="nav-icon">&#36;</span>
 				<span>Pricing</span>
 			</a>
+			<a class="nav-item nav-item-updates" data-page="updates">
+				<span class="nav-icon">&#8682;</span>
+				<span>Updates</span>
+				<span class="nav-badge" id="updatesBadge" hidden>NEW</span>
+			</a>
 		</nav>
 
 		<div class="sidebar-footer">
@@ -50,7 +55,7 @@
 					</button>
 				</a>
 			</div>
-			<span class="footer-version">v1.4.4</span>
+			<span class="footer-version">v1.4.5</span>
 		</div>
 	</div>
 
@@ -284,33 +289,96 @@
 		</div>
 
 		<!-- PAGE: Pricing -->
-		<div class="page page-centered" id="page-pricing">
+		<div class="page page-pricing-compact" id="page-pricing">
 			<div class="section-title">Pricing Overlay</div>
-			<div class="page-desc">Live buff163 / csfloat price comparisons on-site, in notifications, and logs.</div>
+			<div class="page-desc">
+				Live Buff163, CSFloat and YouPin price comparisons rendered on each market item.
+				Powered by <a href="https://cspricebase.com/profile" target="_blank" class="csp-inline">CSPRICEBASE.COM</a> — sign up to grab your API key.
+			</div>
 
-			<div class="page-form">
-				<div class="input-row">
-					<label class="input-label">CSPricebase API Key</label>
-					<div class="input-with-button">
-						<input type="text" placeholder="API-KEY" class="modern-input" id="cspApiKey" />
-						<a href="https://cspricebase.com/profile" target="_blank" class="icon-link">
-							<img src="../../../assets/ico/csp.png" alt="CSP" height="26" width="26" />
-						</a>
-					</div>
-				</div>
-
-				<div class="toggle-card compact">
-					<span class="toggle-label">Pricing Overlay</span>
+			<div class="input-row">
+				<label class="input-label">CSPricebase API Key</label>
+				<div class="input-with-button">
+					<input type="text" placeholder="API-KEY" class="modern-input" id="cspApiKey" />
+					<a href="https://cspricebase.com/profile" target="_blank" class="icon-link">
+						<img src="../../../assets/ico/csp.png" alt="CSP" height="24" width="24" />
+					</a>
 					<label class="switch switch-sm"><input type="checkbox" id="pricingOverlay" /><span class="slider"></span></label>
 				</div>
+			</div>
 
+			<div class="section-title">Markets</div>
+			<div class="market-grid">
+				<div class="market-cell">
+					<img src="../../../assets/ico/buff_logo.png" alt="Buff163" class="market-ico" />
+					<span class="market-label">Buff163</span>
+					<label class="switch switch-sm"><input type="checkbox" id="marketBuff" /><span class="slider"></span></label>
+				</div>
+				<div class="market-cell">
+					<img src="../../../assets/ico/csfloat_logo.png" alt="CSFloat" class="market-ico" />
+					<span class="market-label">CSFloat</span>
+					<label class="switch switch-sm"><input type="checkbox" id="marketCsf" /><span class="slider"></span></label>
+				</div>
+				<div class="market-cell">
+					<img src="../../../assets/ico/uu_logo.png" alt="YouPin" class="market-ico" />
+					<span class="market-label">YouPin</span>
+					<label class="switch switch-sm"><input type="checkbox" id="marketUu" /><span class="slider"></span></label>
+				</div>
+			</div>
+
+			<div class="section-title">Display</div>
+			<div class="controls-grid">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Inflated</span>
+					<label class="switch switch-sm"><input type="checkbox" id="showInflated" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact">
+					<span class="toggle-label">Liquidity</span>
+					<label class="switch switch-sm"><input type="checkbox" id="showLiquidity" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact toggle-card-with-input">
+					<span class="toggle-label">USD</span>
+					<input type="number" id="usdRate" class="rh-rate-input" min="0.1" max="1.5" step="0.01" title="Coin → USD rate (default 0.66)" />
+					<label class="switch switch-sm"><input type="checkbox" id="showUsdPrice" /><span class="slider"></span></label>
+				</div>
 			</div>
 
 			<div class="csp-promo">
-				<span>Get your api key at</span>
+				<span>Get your free API key at</span>
 				<a href="https://cspricebase.com/profile" target="_blank" class="csp-glow">CSPRICEBASE.COM</a>
 			</div>
 			<button class="save-btn full-width" id="savePricing"><span>Save</span></button>
+		</div>
+
+		<!-- PAGE: Updates -->
+		<div class="page" id="page-updates">
+			<div class="section-title">Extension Updates</div>
+
+			<div class="update-status" id="updateStatus">
+				<div class="update-status-row">
+					<span class="update-key">Installed</span>
+					<span class="update-val" id="updateInstalledVer">…</span>
+				</div>
+				<div class="update-status-row">
+					<span class="update-key">Latest</span>
+					<span class="update-val" id="updateLatestVer">checking…</span>
+				</div>
+				<div class="update-status-row" id="updateReleaseDateRow" hidden>
+					<span class="update-key">Released</span>
+					<span class="update-val" id="updateReleaseDate">—</span>
+				</div>
+				<div class="update-banner" id="updateBanner" hidden></div>
+			</div>
+
+			<div class="section-title">What's New</div>
+			<ul class="changelog-list" id="changelogList">
+				<li class="changelog-empty">No changelog available yet.</li>
+			</ul>
+
+			<div class="update-actions">
+				<a href="https://github.com/0xM14N/rollhelper-extension" target="_blank" id="githubLink" class="modern-button-link">Open GitHub</a>
+				<button class="modern-button-link secondary" id="recheckUpdate">Re-check</button>
+			</div>
 		</div>
 
 	</div>

@@ -207,19 +207,86 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 		return true;
 	}
+	if (request.type === 'clearUpdateBadge') {
+		chrome.action.setBadgeText({ text: '' });
+		sendResponse({ ok: true });
+		return false;
+	}
+	if (request.type === 'forceCheckUpdate') {
+		checkExtensionUpdate().then(() => sendResponse({ ok: true }));
+		return true;
+	}
 });
 
 chrome.runtime.onInstalled.addListener(() => {
 	chrome.alarms.create('refresh_cspricebase', {
 		periodInMinutes: 45
 	});
+	chrome.alarms.create('check_extension_update', {
+		periodInMinutes: 360
+	});
+	checkExtensionUpdate();
+});
+
+chrome.runtime.onStartup.addListener(() => {
+	checkExtensionUpdate();
 });
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
 	if (alarm.name === 'refresh_cspricebase') {
 		await refreshCsPriceBase();
 	}
+	if (alarm.name === 'check_extension_update') {
+		await checkExtensionUpdate();
+	}
 });
+
+function compareVersions(a, b) {
+	const pa = String(a || '').split('.').map(n => parseInt(n, 10) || 0);
+	const pb = String(b || '').split('.').map(n => parseInt(n, 10) || 0);
+	const len = Math.max(pa.length, pb.length);
+	for (let i = 0; i < len; i++) {
+		const x = pa[i] || 0;
+		const y = pb[i] || 0;
+		if (x > y) return 1;
+		if (x < y) return -1;
+	}
+	return 0;
+}
+
+async function checkExtensionUpdate() {
+	try {
+		const res = await fetch('https://cspricebase.com/api/rollhelper/version', { cache: 'no-store' });
+		if (!res.ok) return;
+
+		const data = await res.json();
+		if (!data || !data.version) return;
+
+		const current = chrome.runtime.getManifest().version;
+		const isNewer = compareVersions(data.version, current) > 0;
+
+		await chrome.storage.local.set({
+			latestRelease: {
+				version: data.version,
+				githubUrl: data.githubUrl || null,
+				releaseDate: data.releaseDate || null,
+				changelog: Array.isArray(data.changelog) ? data.changelog : [],
+				current,
+				isNewer,
+				checkedAt: Date.now(),
+			}
+		});
+
+		if (isNewer) {
+			chrome.action.setBadgeBackgroundColor({ color: '#00c74d' });
+			chrome.action.setBadgeText({ text: 'NEW' });
+		} else {
+			chrome.action.setBadgeText({ text: '' });
+		}
+	} catch (_) {
+		// network/parse error — silent; we'll retry on next alarm
+	}
+}
 
 async function refreshCsPriceBase() {
 	const API_URL = `https://cspricebase.com/api/get-rollhelper-prices`;
@@ -840,7 +907,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 					const cacheAge = now - (storage.pricing_timestamp || 0);
 
 					// Return cached data if still valid
-					if (storage.pricing_data && cacheAge < EXTENSION_CACHE_DURATION) {
+					if (storage.pricing_data && cacheAge < EXTENSION_CACHE_DURATION &&
+						Object.keys(storage.pricing_data).length > 0 ) {
 						console.log('Using cached pricing data');
 						sendResponse({ data: storage.pricing_data });
 						return;

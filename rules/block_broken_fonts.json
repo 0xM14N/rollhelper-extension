@@ -1,0 +1,12 @@
+[
+	{
+		"id": 1,
+		"priority": 1,
+		"action": { "type": "block" },
+		"condition": {
+			"urlFilter": "/media/flama-",
+			"resourceTypes": ["font"],
+			"requestDomains": ["csgoroll.com", "csgoroll.gg", "csgorolltr.com"]
+		}
+	}
+]

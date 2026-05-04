@@ -5,6 +5,13 @@ document.querySelectorAll('.nav-item[data-page]').forEach(item => {
 		document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
 		item.classList.add('active');
 		document.getElementById('page-' + item.dataset.page).classList.add('active');
+
+		if (item.dataset.page === 'updates') {
+			renderUpdatesPage();
+			const badge = document.getElementById('updatesBadge');
+			if (badge) badge.hidden = true;
+			chrome.runtime.sendMessage({ type: 'clearUpdateBadge' }, () => void chrome.runtime.lastError);
+		}
 	});
 });
 
@@ -62,6 +69,13 @@ let saveTrackingBtn = document.getElementById('saveTracking');
 let cspApiKeyInput = document.getElementById('cspApiKey');
 let pricingSwitch = document.getElementById('pricingOverlay');
 let savePricingBtn = document.getElementById('savePricing');
+let marketBuffSwitch = document.getElementById('marketBuff');
+let marketCsfSwitch = document.getElementById('marketCsf');
+let marketUuSwitch = document.getElementById('marketUu');
+let showInflatedSwitch = document.getElementById('showInflated');
+let showLiquiditySwitch = document.getElementById('showLiquidity');
+let showUsdPriceSwitch = document.getElementById('showUsdPrice');
+let usdRateInput = document.getElementById('usdRate');
 
 // === Init ===
 document.addEventListener('DOMContentLoaded', restoreAll);
@@ -264,9 +278,35 @@ pricingSwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({ enablePricingOverlay: this.checked }, () => callUpdateStorage());
 });
 
+marketBuffSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowBuff: this.checked }, () => callUpdateStorage());
+});
+
+marketCsfSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowCsf: this.checked }, () => callUpdateStorage());
+});
+
+marketUuSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowUu: this.checked }, () => callUpdateStorage());
+});
+
+showInflatedSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowInflated: this.checked }, () => callUpdateStorage());
+});
+
+showLiquiditySwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowLiquidity: this.checked }, () => callUpdateStorage());
+});
+
+showUsdPriceSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ pricingShowUsdPrice: this.checked }, () => callUpdateStorage());
+});
+
 savePricingBtn.addEventListener('click', async function () {
 	const settings = { enablePricingOverlay: pricingSwitch.checked };
 	if (cspApiKeyInput.value !== '') settings.cspApi = cspApiKeyInput.value;
+	const rate = parseFloat(usdRateInput.value);
+	if (!Number.isNaN(rate) && rate > 0) settings.pricingUsdRate = rate;
 	await chrome.storage.sync.set(settings);
 	await callUpdateStorage();
 	if (cspApiKeyInput.value !== '') { cspApiKeyInput.value = ''; cspApiKeyInput.placeholder = '*******'; }
@@ -291,7 +331,8 @@ function restoreAll() {
 		'wantEmergencyAlerts',
 		'token', 'userkey', 'webhook',
 		'trackingApiKey', 'enableTracking',
-		'cspApi', 'enablePricingOverlay'
+		'cspApi', 'enablePricingOverlay',
+		'pricingShowBuff', 'pricingShowCsf', 'pricingShowUu', 'pricingShowInflated', 'pricingShowLiquidity', 'pricingShowUsdPrice', 'pricingUsdRate'
 	]).then(res => {
 		// Trades
 		switchDepo.checked = res.switchDepoState;
@@ -341,6 +382,13 @@ function restoreAll() {
 		// Pricing
 		cspApiKeyInput.placeholder = res.cspApi ? '*******' : 'API-KEY';
 		pricingSwitch.checked = res.enablePricingOverlay;
+		marketBuffSwitch.checked = res.pricingShowBuff ?? true;
+		marketCsfSwitch.checked = res.pricingShowCsf ?? true;
+		marketUuSwitch.checked = res.pricingShowUu ?? true;
+		showInflatedSwitch.checked = res.pricingShowInflated ?? true;
+		showLiquiditySwitch.checked = res.pricingShowLiquidity ?? true;
+		showUsdPriceSwitch.checked = res.pricingShowUsdPrice ?? true;
+		usdRateInput.value = res.pricingUsdRate ?? 0.66;
 	});
 }
 
@@ -372,6 +420,91 @@ function callUpdateStorage() {
 		});
 	});
 }
+
+// =====================
+// UPDATES PAGE
+// =====================
+function renderUpdatesPage() {
+	const installedEl = document.getElementById('updateInstalledVer');
+	const latestEl = document.getElementById('updateLatestVer');
+	const dateRow = document.getElementById('updateReleaseDateRow');
+	const dateEl = document.getElementById('updateReleaseDate');
+	const banner = document.getElementById('updateBanner');
+	const list = document.getElementById('changelogList');
+	const githubLink = document.getElementById('githubLink');
+
+	const manifest = chrome.runtime.getManifest();
+	installedEl.textContent = `v${manifest.version}`;
+
+	chrome.storage.local.get(['latestRelease']).then(({ latestRelease }) => {
+		if (!latestRelease) {
+			latestEl.textContent = 'unknown';
+			banner.hidden = true;
+			return;
+		}
+
+		latestEl.textContent = `v${latestRelease.version}`;
+		latestEl.classList.toggle('is-new', !!latestRelease.isNewer);
+
+		if (latestRelease.releaseDate) {
+			dateEl.textContent = latestRelease.releaseDate;
+			dateRow.hidden = false;
+		} else {
+			dateRow.hidden = true;
+		}
+
+		if (latestRelease.isNewer) {
+			banner.textContent = 'A new version is available — grab it from GitHub.';
+			banner.className = 'update-banner is-new';
+			banner.hidden = false;
+		} else {
+			banner.textContent = 'You\'re on the latest version.';
+			banner.className = 'update-banner is-current';
+			banner.hidden = false;
+		}
+
+		if (latestRelease.githubUrl) {
+			githubLink.href = latestRelease.githubUrl;
+		}
+
+		const items = (latestRelease.changelog || []).filter(Boolean);
+		list.innerHTML = '';
+		if (items.length === 0) {
+			const li = document.createElement('li');
+			li.className = 'changelog-empty';
+			li.textContent = 'No changelog available yet.';
+			list.appendChild(li);
+		} else {
+			for (const entry of items) {
+				const li = document.createElement('li');
+				li.textContent = entry;
+				list.appendChild(li);
+			}
+		}
+	});
+}
+
+const recheckBtn = document.getElementById('recheckUpdate');
+if (recheckBtn) {
+	recheckBtn.addEventListener('click', () => {
+		recheckBtn.textContent = 'Checking…';
+		recheckBtn.disabled = true;
+		chrome.runtime.sendMessage({ type: 'forceCheckUpdate' }, () => {
+			void chrome.runtime.lastError;
+			renderUpdatesPage();
+			recheckBtn.textContent = 'Re-check';
+			recheckBtn.disabled = false;
+		});
+	});
+}
+
+// Show NEW badge in sidebar on popup open if an update was detected
+chrome.storage.local.get(['latestRelease']).then(({ latestRelease }) => {
+	const badge = document.getElementById('updatesBadge');
+	if (badge && latestRelease && latestRelease.isNewer) {
+		badge.hidden = false;
+	}
+});
 
 function flashSaved(btn) {
 	if (!btn) { window.close(); return; }

@@ -1,7 +1,7 @@
 {
 	"name": "ROLLHELPER - TRADING EXTENSION",
 	"description": "Trading automation extension for cs2 traders",
-	"version": "1.4.4",
+	"version": "1.4.5",
 	"author": "https://github.com/0xM14N/",
 	"manifest_version": 3,
 	"icons": {
@@ -53,6 +53,15 @@
 		}
 	},
 	"permissions": ["storage", "tabs", "cookies", "alarms", "declarativeNetRequest", "scripting"],
+	"declarative_net_request": {
+		"rule_resources": [
+			{
+				"id": "block_broken_fonts",
+				"enabled": true,
+				"path": "rules/block_broken_fonts.json"
+			}
+		]
+	},
 	"host_permissions": [
 		"https://*.csgoroll.com/*",
 		"https://*.csgoroll.gg/*",
@@ -69,7 +78,10 @@
 			],
 			"resources": [
 				"assets/rates/rates.json",
-				"assets/ico/csp.png"
+				"assets/ico/csp.png",
+				"assets/ico/buff_logo.png",
+				"assets/ico/csfloat_logo.png",
+				"assets/ico/uu_logo.png"
 			]
 		}
 	]
