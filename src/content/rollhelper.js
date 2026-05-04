@@ -1,4 +1,4 @@
-let version = `1.4.3`;
+let version = `1.4.4`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -35,6 +35,7 @@ console.log(
 
 let STEAM_OFFER_ERROR_PRIORITY = 0;
 let emergencyAlerts;
+let autoTokenUpdate;
 
 let pi;
 let rates;
@@ -482,10 +483,10 @@ const initRollhelper = async () => {
         let currentUrl = response[0];
         domainUrl = createApiUrl(currentUrl);
         await getUserID();
+        await updateSettings();
         await SteamTokenCheck();
         rates = await fetchRates();
         await getCurrentSteamInvData(userID);
-        await updateSettings();
         await loadDecayState();
         await seedDecayFromListedTrades();
         setInterval(checkMarkupDecay, DECAY_CHECK_INTERVAL);
