@@ -77,6 +77,11 @@ let showLiquiditySwitch = document.getElementById('showLiquidity');
 let showUsdPriceSwitch = document.getElementById('showUsdPrice');
 let usdRateInput = document.getElementById('usdRate');
 
+// === Elements: Developer ===
+let logSkinLinkSwitch = document.getElementById('logSkinLinkSwitch');
+let logDbLinkSwitch = document.getElementById('logDbLinkSwitch');
+let cardLinkSkinSwitch = document.getElementById('cardLinkSkinSwitch');
+
 // === Init ===
 document.addEventListener('DOMContentLoaded', restoreAll);
 
@@ -314,6 +319,21 @@ savePricingBtn.addEventListener('click', async function () {
 });
 
 // =====================
+// DEVELOPER PAGE
+// =====================
+logSkinLinkSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ logCspSkinLink: this.checked }, () => callUpdateStorage());
+});
+
+logDbLinkSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ logCspDbLink: this.checked }, () => callUpdateStorage());
+});
+
+cardLinkSkinSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ cardLinkSkinPage: this.checked }, () => callUpdateStorage());
+});
+
+// =====================
 // RESTORE ALL
 // =====================
 function restoreAll() {
@@ -332,7 +352,8 @@ function restoreAll() {
 		'token', 'userkey', 'webhook',
 		'trackingApiKey', 'enableTracking',
 		'cspApi', 'enablePricingOverlay',
-		'pricingShowBuff', 'pricingShowCsf', 'pricingShowUu', 'pricingShowInflated', 'pricingShowLiquidity', 'pricingShowUsdPrice', 'pricingUsdRate'
+		'pricingShowBuff', 'pricingShowCsf', 'pricingShowUu', 'pricingShowInflated', 'pricingShowLiquidity', 'pricingShowUsdPrice', 'pricingUsdRate',
+		'logCspSkinLink', 'logCspDbLink', 'cardLinkSkinPage'
 	]).then(res => {
 		// Trades
 		switchDepo.checked = res.switchDepoState;
@@ -389,6 +410,11 @@ function restoreAll() {
 		showLiquiditySwitch.checked = res.pricingShowLiquidity ?? true;
 		showUsdPriceSwitch.checked = res.pricingShowUsdPrice ?? true;
 		usdRateInput.value = res.pricingUsdRate ?? 0.66;
+
+		// Developer
+		logSkinLinkSwitch.checked = res.logCspSkinLink ?? true;
+		logDbLinkSwitch.checked = res.logCspDbLink ?? false;
+		cardLinkSkinSwitch.checked = res.cardLinkSkinPage ?? true;
 	});
 }
 
@@ -498,7 +524,6 @@ if (recheckBtn) {
 	});
 }
 
-// Show NEW badge in sidebar on popup open if an update was detected
 chrome.storage.local.get(['latestRelease']).then(({ latestRelease }) => {
 	const badge = document.getElementById('updatesBadge');
 	if (badge && latestRelease && latestRelease.isNewer) {

@@ -1,3 +1,7 @@
+// dev flag for CSP local dev
+const CSP_DEV = false;
+const CSP_BASE = CSP_DEV ? 'http://localhost:3000' : 'https://cspricebase.com';
+
 noticeCSSlog = 'color:#00FFFFFF;background-color:black;font-weight: bold; font-size:13px';
 depositCSSlog = 'color:yellow;background-color:black;font-weight: bold; font-size:13px';
 errorCSSlog = 'color:red;background-color:black;font-weight: bold; font-size:13px';
@@ -339,7 +343,29 @@ function transformGemDopplerForCsp(marketName) {
 
 function getCSPUrl (marketName) {
 	let input = transformGemDopplerForCsp(marketName) // doppler gem check
-	return `https://cspricebase.com/database?marketName=${encodeURIComponent(input)}`
+	return `${CSP_BASE}/database?marketName=${encodeURIComponent(input)}`
+}
+
+function cspSlugify (marketName) {
+	return marketName
+		.replace(/['’]/g, "")        // drop apostrophes: "Pandora's" -> "pandoras"
+		.replace(/[™®©★]/g, " ") 	// (TM) (R) (C) and the star -> boundary
+		.normalize("NFKD")         // fold accents to base char + combining mark
+		.replace(/[̀-ͯ]/g, "")     // strip the combining marks ("é" -> "e")
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "-")  // runs of non-alphanumerics -> single dash
+		.replace(/^-+|-+$/g, "");    // trim leading/trailing dashes
+}
+
+function getCSPSlugUrl (marketName) {
+	return `${CSP_BASE}/skins/${cspSlugify(marketName)}`
+}
+
+
+function cspCardUrl (marketName) {
+	return (typeof cardLinkSkinPage !== 'undefined' && !cardLinkSkinPage)
+		? getCSPUrl(marketName)
+		: getCSPSlugUrl(marketName)
 }
 
 function formatExterior(exterior) {

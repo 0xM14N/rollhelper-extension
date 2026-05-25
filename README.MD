@@ -24,9 +24,15 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
-### v1.4.5 — 2026-05-04
+### v1.4.6 — 2026-05-26
+- Added developer section in popup
+- Added Links to CSP new free lookup view
+
+
+### v1.4.5 — 2026-05-05
 - Pricing overlay UI update + popup control for pricing settings
 - version checks for updates in popup
+- Fixed empty pricing caching (if CSP was down on fetch time we cached {})
 
 ### v1.4.4 — 2026-05-04
 - Fixed bug which failed to init Websocket connection

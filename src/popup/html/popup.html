@@ -37,6 +37,10 @@
 				<span class="nav-icon">&#36;</span>
 				<span>Pricing</span>
 			</a>
+			<a class="nav-item" data-page="developer">
+				<span class="nav-icon">&#10095;</span>
+				<span>Developer</span>
+			</a>
 			<a class="nav-item nav-item-updates" data-page="updates">
 				<span class="nav-icon">&#8682;</span>
 				<span>Updates</span>
@@ -100,16 +104,10 @@
 			<div class="promo-section">
 				<span class="promo-label">Looking to sell skins?</span>
 				<div class="promo-cards">
-					<div class="promo-card promo-personal">
-						<span class="promo-tag">Best Rate</span>
-						<span class="promo-title">Instant Buyouts — 97% Buff</span>
-						<span class="promo-handle">maintrades</span>
-						<span class="promo-detail">DM on Discord</span>
-					</div>
-					<a href="https://skinscashout.com/?ref=RLHLPR" target="_blank" class="promo-card promo-site">
-						<span class="promo-tag">Automated</span>
-						<span class="promo-title">SkinsCashout.com</span>
-						<span class="promo-detail">+2.5% bonus with code RLHLPR</span>
+					<a href="https://cspricebase.com/sell-cs2-skins" target="_blank" class="promo-card promo-site">
+						<span class="promo-tag">Up to 95% of Buff</span>
+						<span class="promo-title">CSPRICEBASE.com</span>
+						<span class="promo-detail">Instant cashout for your skins — fast payout at up to 95% of Buff163.</span>
 					</a>
 				</div>
 			</div>
@@ -348,6 +346,37 @@
 				<a href="https://cspricebase.com/profile" target="_blank" class="csp-glow">CSPRICEBASE.COM</a>
 			</div>
 			<button class="save-btn full-width" id="savePricing"><span>Save</span></button>
+		</div>
+
+		<!-- PAGE: Developer -->
+		<div class="page" id="page-developer">
+			<div class="section-title">Console Logger</div>
+			<div class="page-desc">
+				Logs a CSPricebase link for every skin seen in live trade events — open the browser console on CSGORoll to use them.
+			</div>
+			<div class="controls-grid">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Skin Page Link</span>
+					<label class="switch switch-sm"><input type="checkbox" id="logSkinLinkSwitch" /><span class="slider"></span></label>
+				</div>
+				<div class="toggle-card compact">
+					<span class="toggle-label">Database Lookup</span>
+					<label class="switch switch-sm"><input type="checkbox" id="logDbLinkSwitch" /><span class="slider"></span></label>
+				</div>
+			</div>
+			<span class="priority-hint">Skin Page → free cspricebase.com/skins page. Database Lookup → full /database price comparison.</span>
+
+			<div class="section-title">Item Card Link</div>
+			<div class="page-desc">
+				Where the CSPricebase link on each injected CSGORoll item card points.
+			</div>
+			<div class="controls-grid">
+				<div class="toggle-card compact">
+					<span class="toggle-label">Open Skin Page</span>
+					<label class="switch switch-sm"><input type="checkbox" id="cardLinkSkinSwitch" /><span class="slider"></span></label>
+				</div>
+			</div>
+			<span class="priority-hint">On → free /skins page (default). Off → full /database lookup.</span>
 		</div>
 
 		<!-- PAGE: Updates -->

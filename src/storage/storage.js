@@ -46,6 +46,9 @@ const updateSettings = async () => {
 		{ pricingShowLiquidity },
 		{ pricingShowUsdPrice },
 		{ pricingUsdRate },
+		{ logCspSkinLink: storedLogSkinLink },
+		{ logCspDbLink: storedLogDbLink },
+		{ cardLinkSkinPage: storedCardLinkSkinPage },
 	] = await Promise.all([
 		chrome.storage.sync.get(['steamOfferMessage']),
 		chrome.storage.sync.get(['wantSendOffers']),
@@ -93,6 +96,9 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['pricingShowLiquidity']),
 		chrome.storage.sync.get(['pricingShowUsdPrice']),
 		chrome.storage.sync.get(['pricingUsdRate']),
+		chrome.storage.sync.get(['logCspSkinLink']),
+		chrome.storage.sync.get(['logCspDbLink']),
+		chrome.storage.sync.get(['cardLinkSkinPage']),
 	]);
 
 	offerMessage = steamOfferMessage;
@@ -146,6 +152,10 @@ const updateSettings = async () => {
 	pricingLiquidityShown = pricingShowLiquidity ?? true
 	pricingUsdPriceShown = pricingShowUsdPrice ?? true
 	pricingUsdRateValue = (Number(pricingUsdRate) > 0) ? Number(pricingUsdRate) : 0.66
+
+	logCspSkinLink = storedLogSkinLink ?? true
+	logCspDbLink = storedLogDbLink ?? false
+	cardLinkSkinPage = storedCardLinkSkinPage ?? true
 };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

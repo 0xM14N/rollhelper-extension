@@ -79,8 +79,9 @@ function pricingPrefsKey() {
     const inf = (typeof pricingInflatedShown !== 'undefined') ? pricingInflatedShown : true;
     const liq = (typeof pricingLiquidityShown !== 'undefined') ? pricingLiquidityShown : true;
     const usd = (typeof pricingUsdPriceShown !== 'undefined') ? pricingUsdPriceShown : true;
+    const card = (typeof cardLinkSkinPage !== 'undefined' && cardLinkSkinPage) ? 1 : 0;
     const rate = getRollUsdRate();
-    return `${m.buff?1:0}${m.csf?1:0}${m.uu?1:0}|${inf?1:0}|${liq?1:0}|${usd?1:0}|${rate}`;
+    return `${m.buff?1:0}${m.csf?1:0}${m.uu?1:0}|${inf?1:0}|${liq?1:0}|${usd?1:0}|${card}|${rate}`;
 }
 setInterval(() => {
     if (enablePricing !== lastPricingState) {
@@ -329,8 +330,6 @@ function getPricing(item, include_pricing = "true") {
         exterior = extEl.innerText.trim().split(" ")[0]
         // sticker wear
         if (isSticker) {
-            // Sticker | FURIA | Stockholm 2021
-            // Sticker | FURIA (Holo) | Stockholm 2021
             exterior = item.querySelector('div > div > div > span:nth-child(2)').innerText
             exterior = formatExterior(exterior);
 
@@ -342,7 +341,6 @@ function getPricing(item, include_pricing = "true") {
             itemInfo.wear = exterior;
         }
 
-        // ...
     }else {
         // we are probably on p2p page
         extEl = item.querySelector("cw-item-details > div:nth-child(2) > div:nth-child(1) > span") // p2p selector
@@ -418,7 +416,7 @@ function getPricing(item, include_pricing = "true") {
     if (!window.prices || Object.keys(window.prices || {}).length === 0) {
         itemInfo.marketname = itemName;
         itemInfo.noPrices = true;
-        itemInfo.cspurl = getCSPUrl(itemName);
+        itemInfo.cspurl = cspCardUrl(itemName);
         return itemInfo;
     }
 
@@ -438,7 +436,6 @@ function getPricing(item, include_pricing = "true") {
         }
     }
 
-    // PRICE
     if (phase !== undefined) itemName = itemName + ' - ' + phase;
 
     // vanilla check
@@ -446,12 +443,11 @@ function getPricing(item, include_pricing = "true") {
         itemName =  itemName.replace(/\s*\([^)]*\)/, '');
     }
 
-    itemInfo.cspurl = getCSPUrl(itemName)
+    itemInfo.cspurl = cspCardUrl(itemName)
 
     price_obj = prices[itemName];
 
     if (price_obj === undefined) {
-        // console.log(`[PRICECHECK ERROR]: ${itemName}`);
         itemInfo.marketname = itemName;
         itemInfo.error = true;
         return itemInfo;
@@ -534,7 +530,6 @@ function injectCoinUsd(node, data) {
     label.textContent = `≈ ${fmtUsd(usd)}`;
     label.title = `${data.rollPrice.toFixed(2)} coins × ${rate}`;
 
-    // Place directly after the coin balance element so it sits underneath visually
     const host = balance.parentElement || balance;
     host.appendChild(label);
 }
@@ -574,8 +569,8 @@ function fmtUsd(v) {
 
 function deltaClass(d) {
     if (d == null || Number.isNaN(d)) return 'rh-neutral';
-    if (d > 0) return 'rh-pos';   // overpriced vs market = bad for buyer (red)
-    return 'rh-neg';              // underpriced = good (green)
+    if (d > 0) return 'rh-pos';
+    return 'rh-neg';
 }
 
 function makeMarketRow(meta, usd, delta, coins, cspurl) {
@@ -645,7 +640,6 @@ function createOverlay(data) {
     const container = document.createElement('div');
     container.className = 'rollhelper-container';
 
-    // Top-left price stack
     const stack = document.createElement('div');
     stack.className = 'rh-stack';
 
@@ -674,7 +668,6 @@ function createOverlay(data) {
         ? pricingMarkets
         : { buff: true, csf: true, uu: true };
 
-    // hide markups when inflated and toggle off — but keep liquidity / CSP link
     const hideMarkup = data.isInflated && !showInflated;
 
     const rows = [];
@@ -697,7 +690,6 @@ function createOverlay(data) {
         rows.push(inflMsg);
     }
 
-    // Inflated badge sits inline next to the first market row
     if (rows.length > 0 && data.isInflated) {
         const topLine = document.createElement('div');
         topLine.className = 'rh-top-line';

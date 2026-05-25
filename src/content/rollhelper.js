@@ -1,4 +1,4 @@
-let version = `1.4.5`;
+let version = `1.4.6`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -36,6 +36,11 @@ console.log(
 let STEAM_OFFER_ERROR_PRIORITY = 0;
 let emergencyAlerts;
 let autoTokenUpdate;
+
+
+let logCspSkinLink = true;
+let logCspDbLink = false;
+let cardLinkSkinPage = true;
 
 let pi;
 let rates;
@@ -395,6 +400,18 @@ function formatPricingLog(info) {
         `\n[CSFLOAT]: ${cp >= 0 ? "+" : ""}${cp}%` +
         `\n[YOUPIN]: ${up >= 0 ? "+" : ""}${up}% (RATE: ${info.rate})`;
 }
+
+
+function logCspLinks(marketName) {
+    if (!marketName) return;
+    if (logCspSkinLink) {
+        console.log("%cCS:PRICEBASE - SKIN PAGE ➡", cspCSSlog, getCSPSlugUrl(marketName));
+    }
+    if (logCspDbLink) {
+        console.log("%cCS:PRICEBASE - DB LOOKUP ➡", cspCSSlog, getCSPUrl(marketName));
+    }
+}
+
 
 function notifyPushover(message, priority) {
     if (Pushover) sendPushoverNotification(message, { priority: Number(priority) });
@@ -773,7 +790,7 @@ function handleJoined(trade, side, tradeItem, data) {
 
         const log_string = `[DEPOSIT]\n${marketName}\n${formatPricingLog(info)}`;
         console.log(`%c${DateFormater(new Date())} | ${log_string}`, depositCSSlog);
-        console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, info.csp_url);
+        logCspLinks(marketName);
 
         if (depoAlert) {
             notifyPushover(log_string, depositNotifPriority);
@@ -785,7 +802,7 @@ function handleJoined(trade, side, tradeItem, data) {
 
         const log_string = `[WITHDRAW - WAITING]\n${marketName}\n${formatPricingLog(info)}`;
         console.log(`%c${DateFormater(new Date())} | ${log_string}`, noticeCSSlog);
-        console.log("%cCS:PRICEBASE - ITEM ➡", cspCSSlog, getCSPUrl(marketName));
+        logCspLinks(marketName);
     }
 }
 
@@ -832,8 +849,7 @@ function handleProcessing(trade, side, tradeItem, data) {
 
         const log_string = `[WITHDRAW - ACCEPTED]\n${marketName}\n${formatPricingLog(info)}`;
         console.log(`%c${DateFormater(new Date())} | ${log_string}`, withdrawAcceptedCSSlog);
-        console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, info.csp_url);
-        console.log("%cCS:PRICEBASE - ITEM ➡", cspCSSlog, getCSPUrl(marketName));
+        logCspLinks(marketName);
 
         if (withdrawAlert) {
             notifyPushover(log_string, withdrawNotifPriority);
@@ -866,7 +882,7 @@ function handleCompletedProtected(trade, side, tradeItem) {
 
     const log_string = `[DEPOSIT_COMPLETED_PROTECTED]\n${marketName}\n${formatPricingLog(info)}`;
     console.log(`%c${DateFormater(new Date())} | ${log_string}`, depositCSSlog);
-    console.log("%cCS:PRICEBASE - COMPARATOR ➡ (LIVE PRICES)", cspCSSlog, info.csp_url);
+    logCspLinks(marketName);
 
     if (depoAlert) {
         notifyPushover(log_string, protectedNotifPriority);
