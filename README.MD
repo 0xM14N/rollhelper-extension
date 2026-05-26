@@ -24,7 +24,8 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
-### v1.4.6 — 2026-05-26
+### v1.4.7 — 2026-05-26
+- Added notification switch for steam offer cancel
 - Added developer section in popup
 - Added Links to CSP new free lookup view
 

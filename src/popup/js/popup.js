@@ -48,6 +48,7 @@ let completedSwitch = document.getElementById('completedAlert');
 let cooldownSwitch = document.getElementById('cooldownAlert');
 let protectedSwitch = document.getElementById('protectedAlert');
 let reversalSwitch = document.getElementById('reversalAlert');
+let cancelAlertSwitch = document.getElementById('cancelAlert');
 let emergencySwitch = document.getElementById('emergencySwitch');
 let depositPriorityInput = document.getElementById('depoPriority');
 let withdrawPriorityInput = document.getElementById('withdrawPriority');
@@ -55,6 +56,7 @@ let cooldownPriorityInput = document.getElementById('cooldownPriority');
 let completedPriorityInput = document.getElementById('completedPriority');
 let protectedPriorityInput = document.getElementById('protectedPriority');
 let reversalPriorityInput = document.getElementById('reversalPriority');
+let cancelPriorityInput = document.getElementById('cancelPriority');
 let inputUsrkey = document.getElementById('userkeyInput');
 let inputToken = document.getElementById('tokenInput');
 let dcWebhook = document.getElementById('discordInput');
@@ -231,6 +233,13 @@ reversalSwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({ wantReversalAlert: this.checked }, () => callUpdateStorage());
 });
 
+cancelAlertSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({
+		cancelAlertSwitchState: this.checked,
+		wantCancelAlert: this.checked,
+	}, () => callUpdateStorage());
+});
+
 emergencySwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({
 		wantEmergencyAlerts: this.checked,
@@ -245,6 +254,7 @@ saveNotifBtn.addEventListener('click', async function () {
 		completedPushoverPriority: completedPriorityInput.value,
 		protectedPushoverPriority: protectedPriorityInput.value,
 		reversalPushoverPriority: reversalPriorityInput.value,
+		cancelPushoverPriority: cancelPriorityInput.value,
 		switchNotifyState: switchNotify.checked,
 		dcNotifyState: dcNotify.checked,
 	};
@@ -345,9 +355,9 @@ function restoreAll() {
 		'steamOfferMessage',
 		'switchNotifyState', 'dcNotifyState',
 		'depoAlertSwitchState', 'withdrawAlertSwitchState', 'completedAlertSwitchState', 'cooldownSwitchState',
-		'wantProtectedAlert', 'wantReversalAlert',
+		'wantProtectedAlert', 'wantReversalAlert', 'cancelAlertSwitchState',
 		'depoPushoverPriority', 'withdrawPushoverPriority', 'cooldownPushoverPriority',
-		'completedPushoverPriority', 'protectedPushoverPriority', 'reversalPushoverPriority',
+		'completedPushoverPriority', 'protectedPushoverPriority', 'reversalPushoverPriority', 'cancelPushoverPriority',
 		'wantEmergencyAlerts',
 		'token', 'userkey', 'webhook',
 		'trackingApiKey', 'enableTracking',
@@ -383,6 +393,7 @@ function restoreAll() {
 		cooldownSwitch.checked = res.cooldownSwitchState;
 		protectedSwitch.checked = res.wantProtectedAlert;
 		reversalSwitch.checked = res.wantReversalAlert;
+		cancelAlertSwitch.checked = res.cancelAlertSwitchState;
 		emergencySwitch.checked = res.wantEmergencyAlerts;
 
 		depositPriorityInput.value = res.depoPushoverPriority ?? 0;
@@ -391,6 +402,7 @@ function restoreAll() {
 		completedPriorityInput.value = res.completedPushoverPriority ?? 0;
 		protectedPriorityInput.value = res.protectedPushoverPriority ?? 0;
 		reversalPriorityInput.value = res.reversalPushoverPriority ?? 0;
+		cancelPriorityInput.value = res.cancelPushoverPriority ?? 0;
 
 		inputToken.placeholder = res.token ? '*******' : 'Pushover Token';
 		inputUsrkey.placeholder = res.userkey ? '*******' : 'Pushover User Key';

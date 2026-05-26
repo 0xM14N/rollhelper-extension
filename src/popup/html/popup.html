@@ -59,7 +59,7 @@
 					</button>
 				</a>
 			</div>
-			<span class="footer-version">v1.4.5</span>
+			<span class="footer-version">v1.4.7</span>
 		</div>
 	</div>
 
@@ -231,6 +231,11 @@
 					<input type="number" id="protectedPriority" class="priority-input" min="-2" max="2" value="0" />
 				</div>
 				<div class="alert-cell">
+					<label class="switch switch-sm"><input type="checkbox" id="cancelAlert" /><span class="slider"></span></label>
+					<span class="alert-label">Auto Cancel</span>
+					<input type="number" id="cancelPriority" class="priority-input" min="-2" max="2" value="0" />
+				</div>
+				<div class="alert-cell">
 					<label class="switch switch-sm"><input type="checkbox" id="reversalAlert" disabled /><span class="slider"></span></label>
 					<span class="alert-label">Reversal</span>
 					<input type="number" id="reversalPriority" class="priority-input" min="-2" max="2" value="0" disabled />
@@ -252,7 +257,7 @@
 					<input type="text" placeholder="Token" class="modern-input" id="tokenInput" />
 				</div>
 			</div>
-			<span class="priority-hint">Priority inputs: -2 (min) to 2 (max)</span>
+				<span class="priority-hint">Priority inputs: -2 (min) to 2 (max)</span>
 			<button class="save-btn full-width" id="saveNotifications"><span>Save</span></button>
 		</div>
 

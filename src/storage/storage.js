@@ -22,6 +22,8 @@ const updateSettings = async () => {
 		{ protectedPushoverPriority },
 		{ wantReversalAlert },
 		{ wantProtectedAlert },
+		{ wantCancelAlert },
+		{ cancelPushoverPriority },
 		{ trackingApiKey },
 		{ enableTracking },
 		{ wantAutoCancelOffers },
@@ -72,6 +74,8 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['protectedPushoverPriority']),
 		chrome.storage.sync.get(['wantReversalAlert']),
 		chrome.storage.sync.get(['wantProtectedAlert']),
+		chrome.storage.sync.get(['wantCancelAlert']),
+		chrome.storage.sync.get(['cancelPushoverPriority']),
 		chrome.storage.sync.get(['trackingApiKey']),
 		chrome.storage.sync.get(['enableTracking']),
 		chrome.storage.sync.get(['wantAutoCancelOffers']),
@@ -107,6 +111,7 @@ const updateSettings = async () => {
 	cooldownAlert = wantCooldownAlert;
 	protectedAlert = wantProtectedAlert
 	reversalAlert = wantReversalAlert
+	cancelAlert = wantCancelAlert
 	discord = dcNotifyState;
 	withdrawAlert = wantWithdrawalAlert;
 	depoAlert = wantDepoAlert;
@@ -124,6 +129,7 @@ const updateSettings = async () => {
 	completedNotifPriority = completedPushoverPriority
 	reversalNotifPriority =  reversalPushoverPriority
 	protectedNotifPriority = protectedPushoverPriority
+	cancelNotifPriority = cancelPushoverPriority
 
 	trackingKey = trackingApiKey
 	wantTracking = enableTracking

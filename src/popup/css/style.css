@@ -140,10 +140,10 @@ body {
 
 .page {
 	display: none;
-	padding: 18px 22px;
+	padding: 14px 22px;
 	height: 100%;
 	flex-direction: column;
-	gap: 12px;
+	gap: 10px;
 }
 
 .page.active {
@@ -468,30 +468,41 @@ input:disabled + .slider {
 /* ===== Notifications Page ===== */
 .notif-top-row {
 	display: flex;
-	gap: 10px;
+	gap: 8px;
+}
+
+.notif-top-row .toggle-card.compact {
+	padding: 5px 10px;
+	gap: 8px;
+}
+
+.notif-top-row .toggle-card.emergency.compact {
+	padding: 5px 8px;
 }
 
 .alert-grid {
 	display: grid;
-	grid-template-columns: repeat(6, 1fr);
-	gap: 8px;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 5px;
 }
 
 .alert-cell {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: center;
 	gap: 6px;
-	padding: 8px 4px;
+	padding: 4px 9px;
 	background: rgba(255, 255, 255, 0.025);
 	border: 1px solid rgba(255, 255, 255, 0.05);
 	border-radius: 8px;
 }
 
 .alert-label {
-	font-size: 9px;
-	color: #6b7280;
-	text-align: center;
+	flex: 1;
+	font-size: 10px;
+	color: #9ca3af;
+	text-align: left;
+	white-space: nowrap;
 }
 
 .priority-input {
@@ -523,7 +534,11 @@ input:disabled + .slider {
 .notif-inputs {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 5px;
+}
+
+.notif-inputs .modern-input {
+	padding: 6px 10px;
 }
 
 .labeled-input {

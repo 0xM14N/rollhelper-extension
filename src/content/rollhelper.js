@@ -1,4 +1,4 @@
-let version = `1.4.6`;
+let version = `1.4.7`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -965,16 +965,22 @@ async function autoCancelPendingSteamOffer(trade, marketName) {
     try {
         await retryWithBackoff(() => cancelSteamTradeOffer(steamOfferId), 'AUTO-CANCEL');
         console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL] Steam offer ${steamOfferId} cancelled for ${marketName}`, steamOfferCSSlog);
-        sendPushoverNotification(`[AUTO-CANCEL]: Steam offer cancelled\n${marketName}\nOffer ID: ${steamOfferId}`);
+        if (cancelAlert) {
+            notifyPushover(`[AUTO-CANCEL]: Steam offer cancelled\n${marketName}\nOffer ID: ${steamOfferId}`, cancelNotifPriority);
+        }
     } catch (err) {
         const alreadyInactive = err.message.includes('status 500') || err.message.includes('"success"');
         if (alreadyInactive) {
             console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL] Offer ${steamOfferId} already inactive for ${marketName}`, noticeCSSlog);
         } else {
             console.log(`%c${DateFormater(new Date())} | [AUTO-CANCEL ERROR] Failed to cancel offer ${steamOfferId}: ${err.message}`, errorCSSlog);
-            sendPushoverNotification(`[AUTO-CANCEL-ERROR]: Failed to cancel steam offer\n${marketName}\n${err.message}`, {
-                priority: emergencyAlerts ? 2 : 1
-            });
+            if (cancelAlert) {
+                notifyPushover(`[AUTO-CANCEL-ERROR]: Failed to cancel steam offer\n${marketName}\n${err.message}`, cancelNotifPriority);
+            }
+
+            // sendPushoverNotification(`[AUTO-CANCEL-ERROR]: Failed to cancel steam offer\n${marketName}\n${err.message}`, {
+            //     priority: emergencyAlerts ? 2 : 1
+            // });
         }
     }
 }
