@@ -1,4 +1,4 @@
-let version = `1.4.7`;
+let version = `1.4.8`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,

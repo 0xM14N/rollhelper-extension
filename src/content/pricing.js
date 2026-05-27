@@ -1,19 +1,46 @@
 let pricesLoaded = false;
 let isInitialized = false;
 
-let activeObserversMap = new Map();
 let rootObserverInstance = null;
 let enablePricing
-let lastPath = location.pathname;
+let lastUrl = location.href;
+
+const NAV_SUPPRESS_MS = 900;
+let injectionSuppressedUntil = 0;
+let depositDrawerPresent = false;
+
+function onViewTransition() {
+    removeAllOverlays();
+    injectionSuppressedUntil = Date.now() + NAV_SUPPRESS_MS;
+    setTimeout(() => {
+        if (!enablePricing) return;
+        processExistingCards();
+        refreshAllOverlays();
+    }, NAV_SUPPRESS_MS + 50);
+}
 
 setInterval(() => {
-    if (location.pathname !== lastPath) {
-        lastPath = location.pathname;
-
-        removeAllOverlays();
-        processExistingCards();
+    if (location.href !== lastUrl) {
+        lastUrl = location.href;
+        onViewTransition();
     }
+
+    const drawer = !!document.querySelector('.deposit-section-promo');
+    if (drawer !== depositDrawerPresent) {
+        depositDrawerPresent = drawer;
+        onViewTransition();
+    }
+
+    sweepCoveredOverlays();
 }, 200);
+
+document.addEventListener('animationstart', (e) => {
+    const t = e.target;
+    if (t instanceof HTMLElement &&
+        Array.from(t.classList).some(c => c.startsWith('payment-anim'))) {
+        onViewTransition();
+    }
+}, true);
 
 function initializePricing() {
     isInitialized = true;
@@ -53,7 +80,7 @@ const watchPrices = setInterval(() => {
     }
 
     if (pricesLoaded) {
-        const loadingCards = document.querySelectorAll('.buff-overlay .loading');
+        const loadingCards = document.querySelectorAll('.buff-overlay .rh-loading');
         if (loadingCards.length > 0) {
             // console.log(`[RollHelper] Found ${loadingCards.length} cards still loading, refreshing...`);
             refreshAllOverlays();
@@ -63,7 +90,7 @@ const watchPrices = setInterval(() => {
 
 function removeAllOverlays() {
     document.querySelectorAll('.buff-overlay, .marketname-overlay, .rh-coin-usd').forEach(el => el.remove());
-    document.querySelectorAll('cw-csgo-market-item-card[data-pricing-injected]').forEach(node => {
+    document.querySelectorAll('[class~="group/card"][data-pricing-injected]').forEach(node => {
         delete node.dataset.pricingInjected;
     });
 }
@@ -109,84 +136,83 @@ if (enablePricing) {
     initializePricing();
 }
 
+function isItemCard(node) {
+    return !!(
+        node.querySelector('img[class~="drop-shadow-lg"]') &&
+        node.querySelector('img[data-testid="currency-image"]')
+    );
+}
+
+
+function isCardVisible(card) {
+    const rect = card.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return true;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    if (cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) return true;
+    const top = document.elementFromPoint(cx, cy);
+    if (!top) return true;
+    return card.contains(top) || card === top;
+}
+
+function sweepCoveredOverlays() {
+    if (!enablePricing) return;
+    document
+        .querySelectorAll('[class~="group/card"][data-pricing-injected="true"]')
+        .forEach(card => {
+            if (isCardVisible(card)) return;
+            card.querySelectorAll(':scope > .buff-overlay, :scope > .marketname-overlay').forEach(el => el.remove());
+            card.querySelectorAll('.rh-coin-usd').forEach(el => el.remove());
+            delete card.dataset.pricingInjected;
+        });
+}
+
 function maybeInject(node) {
     if (!enablePricing) return;
     if (!(node instanceof HTMLElement)) return;
-    if (node.localName !== 'cw-csgo-market-item-card') return;
+    if (!node.matches?.('[class~="group/card"]')) return;
     if (node.dataset.pricingInjected) return;
-
-    const firstEl = node.firstElementChild;
-    if (!firstEl || firstEl.classList.contains('horizontal')) return;
+    if (!isItemCard(node)) return;
+    if (!isCardVisible(node)) return;
 
     node.dataset.pricingInjected = 'true';
     const data = getPricing(node);
+
+    if (Date.now() < injectionSuppressedUntil) data.noPrices = true;
     injectOverlay(node, data);
 }
 
-function observeContainer(container) {
-    container
-        .querySelectorAll('cw-csgo-market-item-card')
-        .forEach(maybeInject);
-
-    const observer = new MutationObserver(mutations => {
-        for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-                if (!(node instanceof HTMLElement)) continue;
-
-                if (node.matches?.('cw-csgo-market-item-card')) {
-                    maybeInject(node);
-                }
-
-                node
-                    .querySelectorAll?.('cw-csgo-market-item-card')
-                    .forEach(maybeInject);
-            }
-        }
-    });
-
-    observer.observe(container, {
-        childList: true,
-        subtree: true,
-    });
-
-    return observer;
+function getCardRoot() {
+    return document.getElementById('main-div') || document.body;
 }
 
 function start() {
-    const containerSelectors = [
-        'cw-player-to-player-deposit',
-        'cw-withdraw',
-    ];
+    const root = getCardRoot();
 
-    function tryAttach() {
-        if (!enablePricing) return;
-
-        for (const [selector, observer] of activeObserversMap.entries()) {
-            if (!document.querySelector(selector)) {
-                observer.disconnect();
-                activeObserversMap.delete(selector);
-            }
-        }
-
-        for (const selector of containerSelectors) {
-            if (activeObserversMap.has(selector)) continue;
-
-            const container = document.querySelector(selector);
-            if (!container) continue;
-
-            const observer = observeContainer(container);
-            activeObserversMap.set(selector, observer);
-        }
-    }
-
-    tryAttach();
+    root.querySelectorAll('[class~="group/card"]').forEach(maybeInject);
 
     if (rootObserverInstance) {
         rootObserverInstance.disconnect();
     }
 
-    rootObserverInstance = new MutationObserver(tryAttach);
-    rootObserverInstance.observe(document.body, {
+    rootObserverInstance = new MutationObserver(mutations => {
+        if (!enablePricing) return;
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (!(node instanceof HTMLElement)) continue;
+
+                if (node.matches?.('[class~="group/card"]')) {
+                    maybeInject(node);
+                }
+
+                node
+                    .querySelectorAll?.('[class~="group/card"]')
+                    .forEach(maybeInject);
+            }
+        }
+    });
+
+    rootObserverInstance.observe(root, {
         childList: true,
         subtree: true,
     });
@@ -194,12 +220,12 @@ function start() {
 
 function processExistingCards() {
     document
-        .querySelectorAll('cw-csgo-market-item-card')
+        .querySelectorAll('[class~="group/card"]')
         .forEach(node => maybeInject(node));
 }
 
 function refreshAllOverlays() {
-    const cards = document.querySelectorAll('cw-csgo-market-item-card[data-pricing-injected="true"]');
+    const cards = document.querySelectorAll('[class~="group/card"][data-pricing-injected="true"]');
 
     cards.forEach(node => {
         const existingOverlay = node.querySelector(':scope > .buff-overlay');
@@ -216,201 +242,80 @@ function refreshAllOverlays() {
     });
 }
 
+const VARIANT_COLORS = {
+    'Sticker': {
+        'rgb(156,102,255)': 'Holo',
+        'rgb(216,92,230)': 'Foil',
+        'rgb(230,92,92)': 'Gold',
+    },
+    'Patch': {
+        'rgb(156,102,255)': 'Gold',
+    },
+};
 
-function getPricing(item, include_pricing = "true") {
+function normRgb(c) {
+    return (c || '').replace(/\s+/g, '');
+}
+
+function getItemVariant(card, category) {
+    const table = VARIANT_COLORS[category];
+    if (!table) return null;
+    const dot = card.querySelector('[class~="w-1.75"]');
+    if (!dot) return null;
+    const color = normRgb(getComputedStyle(dot).backgroundColor);
+    return table[color] || null;
+}
+
+// "Sticker | Avangar | Boston 2018" -> "Sticker | Avangar (Holo) | Boston 2018"
+// "Patch | MOUZ | Stockholm 2021"   -> "Patch | MOUZ (Gold) | Stockholm 2021"
+function applyVariant(itemName, variant) {
+    const parts = itemName.split(' | ');
+    if (parts.length < 2) return itemName;
+    parts[1] = `${parts[1]} (${variant})`;
+    return parts.join(' | ');
+}
+
+function getPricing(card, include_pricing = "true") {
     let itemInfo = {}
-    let itemName = '';
-    let isSticker = false;
-    let isStickered = false;
 
-    let stickeredItem = item.querySelector(
-        'div:nth-child(1) > div:nth-child(1) > div:nth-child(5) > span:nth-child(2)',
-    );
+    // --- main item image: alt = display name (incl. wear + doppler phase inline) ---
+    const mainImg =
+        card.querySelector('img[class~="drop-shadow-lg"]') ||
+        card.querySelector('[class~="max-w-39.5"] img');
+    const alt = (mainImg?.getAttribute('alt') || '').trim();
 
-    let normalItem = item.querySelector(
-        'div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > span:nth-child(2)',
-    );
+    // --- category / type span (weapon w/ ★ & StatTrak™, "Sticker", "Case", agent …) ---
+    const catEl = card.querySelector('span.text-2xs[class~="text-gray-100"]');
+    const category = (catEl?.textContent || '').trim();
+    itemInfo.skinWeapon = category;
 
-    if (
-        item.querySelector(
-            'div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > span:nth-child(2)',
-        )
-    ) {
-        itemInfo.skinWeapon = item
-            .querySelector(
-                'div:nth-child(1) > div:nth-child(1) > div:nth-child(4) > span:nth-child(2)',
-            )
-            .innerHTML.trim();
-        // is non-stickered
-        if (itemInfo.skinWeapon === 'Sticker') {
-            isSticker = true;
-            itemName += 'Sticker | ';
-        } else {
-            itemName += itemInfo.skinWeapon;
-        }
-    } else {
-        // is stickered
-        itemInfo.skinWeapon = item
-            .querySelector(
-                'div:nth-child(1) > div:nth-child(1) > div:nth-child(5) > span:nth-child(2)',
-            )
-            .innerHTML.trim();
-        itemName += itemInfo.skinWeapon;
-        isStickered = true;
+    // --- skin / variant name span ("Redline", "Doppler Phase 2", "KOI | Copenhagen 2024") ---
+    const nameEl = card.querySelector('span[class~="min-h-5"]');
+    const skin = (nameEl?.textContent || '').trim();
+    if (skin) itemInfo.skinName = skin;
+
+    // --- wear: trailing "(...)" of the alt (e.g. "Battle-Scarred"); absent on stickers ---
+    let exterior = null;
+    const wearMatch = alt.match(/\(([^)]+)\)\s*$/);
+    if (wearMatch) exterior = wearMatch[1].trim();
+    if (exterior) itemInfo.wear = exterior;
+
+    // --- build the market name: "<category> | <skin>", then "(wear)" for weapon skins ---
+    let itemName = skin ? `${category} | ${skin}` : category;
+    if (exterior && itemName.includes('|')) {
+        itemName += ` (${exterior})`;
     }
 
-    // SKIN NAME  ===============================================================
-    if (item.querySelector('div:nth-child(1) > div:nth-child(1) > label')) {
-        if (isSticker) {
-            let skin = item
-                .querySelector('div:nth-child(1) > div:nth-child(1) > label')
-                .innerHTML.trim();
-            itemName += skin;
-        } else {
-            let skin = item
-                .querySelector('div:nth-child(1) > div:nth-child(1) > label')
-                .innerHTML.trim();
-            let nameArr = skin.split(' ');
-            let f = nameArr[0];
-            let s = nameArr[1];
+    // --- sticker/patch finish (Holo/Foil/Gold) inferred from the rarity-square colour ---
+    const variant = getItemVariant(card, category);
+    if (variant) itemName = applyVariant(itemName, variant);
 
-            // if doppler has a phase
-            if (f == 'Doppler') {
-                itemInfo.skinName = 'Doppler';
-                itemName += ' | ' + 'Doppler';
-                var phase = s + ' ' + nameArr[2];
-            }
-
-            // if doppler is a gem
-            else if (nameArr.length === 1 && (f == 'Ruby' || f == 'Sapphire')) {
-                itemInfo.skinName = f;
-                itemName += ' | ' + 'Doppler';
-                var phase = f;
-            }
-
-            // if doppler is a Black Pearl
-            else if (f == 'Black' && s == 'Pearl') {
-                itemInfo.skinName = 'Black Pearl';
-                itemName += ' | ' + 'Doppler';
-                var phase = 'Black Pearl';
-            }
-
-            // if doppler is a gamma doppler
-            else if (f == 'Gamma' && s == 'Doppler') {
-                itemInfo.skinName = f + ' ' + s;
-                itemName += ' | ' + 'Gamma Doppler';
-                var phase = nameArr[2] + ' ' + nameArr[3];
-            }
-
-            // if gamma doppler is a gem -> emerald
-            else if (nameArr.length === 1 && f == 'Emerald' && (isKnife(itemName) || itemName.includes('Glock'))) {
-                itemInfo.skinName = f;
-                itemName += ' | ' + 'Gamma Doppler';
-                var phase = 'Emerald';
-            } else if (
-                itemInfo.skinWeapon.includes('Case') ||
-                itemInfo.skinWeapon.includes('Pin')
-            ) {
-                // continue
-            } else if (!skin) {
-                // continue
-            } else {
-                itemInfo.skinName = skin;
-                itemName += ' | ' + skin;
-            }
-        }
-    }
-
-    // SKIN EXTERIOR   ===============================================================
-    let extEl;
-    let exterior;
-    extEl = item.querySelector("cw-item-float-wear-info > span") // deposit page selector
-    if (extEl){
-        // we are on depo page
-        exterior = extEl.innerText.trim().split(" ")[0]
-        // sticker wear
-        if (isSticker) {
-            exterior = item.querySelector('div > div > div > span:nth-child(2)').innerText
-            exterior = formatExterior(exterior);
-
-            itemName = itemName.replace(
-                /(Sticker \| [^|]+)( \| .+)/,
-                `$1 (${exterior})$2`
-            );
-
-            itemInfo.wear = exterior;
-        }
-
-    }else {
-        // we are probably on p2p page
-        extEl = item.querySelector("cw-item-details > div:nth-child(2) > div:nth-child(1) > span") // p2p selector
-        if (extEl) {
-            exterior = extEl.innerText.trim().split(" ")[0];
-        }
-        if (isSticker) {
-            exterior = item.querySelector('div > div > div > span:nth-child(2)').innerText // holo glitter etc..
-            if (exterior != "Sticker") {
-                let nameArr = itemName.split(' ');
-                let f = 0;
-                for (let i = 0; i < nameArr.length; i++) {
-                    if (nameArr[i] === '|') {
-                        f++;
-                        if (f === 2) {
-                            exterior = exterior.toLowerCase().charAt(0).toUpperCase() + exterior.slice(1).toLowerCase();
-                            nameArr[i - 1] += ` (${exterior})`;
-                            break;
-                        }
-                    }
-                }
-                itemName = nameArr.join(' ');
-            }
-        }
-    }
-
-    switch (exterior) {
-        case "FN":
-            itemName += ' (Factory New)';
-            itemInfo.wear = 'Factory New'
-            break;
-        case "MW":
-            itemName += ' (Minimal Wear)';
-            itemInfo.wear = 'Minimal Wear'
-            break;
-        case "FT":
-            itemName += ' (Field-Tested)';
-            itemInfo.wear = 'Field-Tested'
-            break;
-        case "WW":
-            itemName += ' (Well-Worn)';
-            itemInfo.wear = 'Well-Worn'
-            break;
-        case "BS":
-            itemName += ' (Battle-Scarred)';
-            itemInfo.wear = 'Battle-Scarred'
-            break;
-    }
-
-    let rollPrice;
-
-    if (!isStickered) {
-        rollPrice =
-            Math.floor(
-                item
-                    .querySelector(
-                        'div:nth-child(1) > div:nth-child(1) > ' +
-                        'div:nth-child(6) > cw-pretty-balance > span',
-                    )
-                    .innerText.replace(',', '') * 100,
-            ) / 100;
-    } else {
-        rollPrice =
-            Math.floor(
-                item
-                    .querySelector(`cw-pretty-balance > span`)
-                    .innerText.replace(',', '') * 100,
-            ) / 100;
-    }
-
+    // --- coin price: text of the span that holds the currency icon ---
+    const curImg = card.querySelector('img[data-testid="currency-image"]');
+    const priceText = curImg?.parentElement
+        ? curImg.parentElement.textContent.replace(/[^\d.,]/g, '').replace(/,/g, '')
+        : '';
+    let rollPrice = priceText ? Math.floor(parseFloat(priceText) * 100) / 100 : 0;
     itemInfo.rollPrice = rollPrice;
 
     if (!window.prices || Object.keys(window.prices || {}).length === 0) {
@@ -436,16 +341,17 @@ function getPricing(item, include_pricing = "true") {
         }
     }
 
-    if (phase !== undefined) itemName = itemName + ' - ' + phase;
+    // doppler phase/gem - CSPricebase key format ("… Doppler (FN) - Phase 2")
+    if (isDoppler(itemName)) itemName = refactorDopplerNameForPE(itemName);
 
-    // vanilla check
+    // vanilla check (no "|" but has a wear)
     if (!itemName.includes("|") && itemInfo.wear) {
         itemName =  itemName.replace(/\s*\([^)]*\)/, '');
     }
 
     itemInfo.cspurl = cspCardUrl(itemName)
 
-    price_obj = prices[itemName];
+    let price_obj = prices[itemName];
 
     if (price_obj === undefined) {
         itemInfo.marketname = itemName;
@@ -515,13 +421,14 @@ function injectOverlay(node, data) {
 }
 
 function injectCoinUsd(node, data) {
-    if (data.rollPrice == null) return;
+    if (!data.rollPrice) return;
 
     const showUsd = (typeof pricingUsdPriceShown !== 'undefined') ? pricingUsdPriceShown : true;
     if (!showUsd) return;
 
-    const balance = node.querySelector('cw-pretty-balance');
-    if (!balance) return;
+    const curImg = node.querySelector('img[data-testid="currency-image"]');
+    const priceSpan = curImg?.parentElement;
+    if (!priceSpan) return;
 
     const rate = getRollUsdRate();
     const usd = data.rollPrice * rate;
@@ -530,7 +437,8 @@ function injectCoinUsd(node, data) {
     label.textContent = `≈ ${fmtUsd(usd)}`;
     label.title = `${data.rollPrice.toFixed(2)} coins × ${rate}`;
 
-    const host = balance.parentElement || balance;
+    // priceSpan -> price-row -> info column; drop the USD line just under the price row
+    const host = priceSpan.parentElement?.parentElement || priceSpan.parentElement;
     host.appendChild(label);
 }
 
