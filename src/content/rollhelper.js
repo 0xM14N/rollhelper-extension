@@ -1,4 +1,4 @@
-let version = `1.4.8`;
+let version = `1.4.9`;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,
@@ -259,8 +259,8 @@ async function performDecayRelist(tradeId, data, newMarkup) {
 
         console.log(`%c${DateFormater(new Date())} | [${label}] ${marketName} relisted: ${data.currentMarkup}% -> ${newMarkup}% (${relistValue.toFixed(2)} coins)`, steamOfferCSSlog);
 
-        if (depoAlert) {
-            notifyPushover(`[${label}]: ${marketName}\n${data.currentMarkup}% -> ${newMarkup}%\n${relistValue.toFixed(2)} coins`, 0);
+        if (decayAlert) {
+            notifyPushover(`[${label}]: ${marketName}\n${data.currentMarkup}% -> ${newMarkup}%\n${relistValue.toFixed(2)} coins`, decayNotifPriority);
         }
     } catch (err) {
         console.log(`%c${DateFormater(new Date())} | [${label} ERROR] ${marketName}: ${err.message}`, errorCSSlog);
@@ -771,9 +771,9 @@ function handleJoined(trade, side, tradeItem, data) {
             const sgLog = `[SAFEGUARD BLOCKED]\n${marketName}\nBase: $${safeguardHit.rollUsd} | ${safeguardHit.market}: $${safeguardHit.marketUsd} (${safeguardHit.delta}%)`;
             console.log(`%c${DateFormater(new Date())} | ${sgLog}`, errorCSSlog);
 
-            notifyPushover(`[SAFEGUARD BLOCKED]: ${marketName}\nCSGORoll: $${safeguardHit.rollUsd} vs ${safeguardHit.market}: $${safeguardHit.marketUsd}\nDelta: ${safeguardHit.delta}%\nAuto-accept skipped!`, {
-                priority: emergencyAlerts ? 2 : 1
-            });
+            if (safeguardAlert) {
+                notifyPushover(`[SAFEGUARD BLOCKED]: ${marketName}\nCSGORoll: $${safeguardHit.rollUsd} vs ${safeguardHit.market}: $${safeguardHit.marketUsd}\nDelta: ${safeguardHit.delta}%\nAuto-accept skipped!`, safeguardNotifPriority);
+            }
             notifyDiscord('SafeguardBlocked', {
                 marketname: marketName,
                 value: value,

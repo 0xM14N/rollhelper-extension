@@ -47,7 +47,8 @@ let withdrawalSwitch = document.getElementById('withdrawAlert');
 let completedSwitch = document.getElementById('completedAlert');
 let cooldownSwitch = document.getElementById('cooldownAlert');
 let protectedSwitch = document.getElementById('protectedAlert');
-let reversalSwitch = document.getElementById('reversalAlert');
+let safeguardAlertSwitch = document.getElementById('safeguardAlert');
+let decayAlertSwitch = document.getElementById('decayAlert');
 let cancelAlertSwitch = document.getElementById('cancelAlert');
 let emergencySwitch = document.getElementById('emergencySwitch');
 let depositPriorityInput = document.getElementById('depoPriority');
@@ -55,7 +56,8 @@ let withdrawPriorityInput = document.getElementById('withdrawPriority');
 let cooldownPriorityInput = document.getElementById('cooldownPriority');
 let completedPriorityInput = document.getElementById('completedPriority');
 let protectedPriorityInput = document.getElementById('protectedPriority');
-let reversalPriorityInput = document.getElementById('reversalPriority');
+let safeguardPriorityInput = document.getElementById('safeguardPriority');
+let decayPriorityInput = document.getElementById('decayPriority');
 let cancelPriorityInput = document.getElementById('cancelPriority');
 let inputUsrkey = document.getElementById('userkeyInput');
 let inputToken = document.getElementById('tokenInput');
@@ -229,8 +231,12 @@ protectedSwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({ wantProtectedAlert: this.checked }, () => callUpdateStorage());
 });
 
-reversalSwitch.addEventListener('change', function () {
-	chrome.storage.sync.set({ wantReversalAlert: this.checked }, () => callUpdateStorage());
+safeguardAlertSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ wantSafeguardAlert: this.checked }, () => callUpdateStorage());
+});
+
+decayAlertSwitch.addEventListener('change', function () {
+	chrome.storage.sync.set({ wantDecayAlert: this.checked }, () => callUpdateStorage());
 });
 
 cancelAlertSwitch.addEventListener('change', function () {
@@ -253,7 +259,8 @@ saveNotifBtn.addEventListener('click', async function () {
 		cooldownPushoverPriority: cooldownPriorityInput.value,
 		completedPushoverPriority: completedPriorityInput.value,
 		protectedPushoverPriority: protectedPriorityInput.value,
-		reversalPushoverPriority: reversalPriorityInput.value,
+		safeguardPushoverPriority: safeguardPriorityInput.value,
+		decayPushoverPriority: decayPriorityInput.value,
 		cancelPushoverPriority: cancelPriorityInput.value,
 		switchNotifyState: switchNotify.checked,
 		dcNotifyState: dcNotify.checked,
@@ -355,9 +362,9 @@ function restoreAll() {
 		'steamOfferMessage',
 		'switchNotifyState', 'dcNotifyState',
 		'depoAlertSwitchState', 'withdrawAlertSwitchState', 'completedAlertSwitchState', 'cooldownSwitchState',
-		'wantProtectedAlert', 'wantReversalAlert', 'cancelAlertSwitchState',
+		'wantProtectedAlert', 'wantSafeguardAlert', 'wantDecayAlert', 'cancelAlertSwitchState',
 		'depoPushoverPriority', 'withdrawPushoverPriority', 'cooldownPushoverPriority',
-		'completedPushoverPriority', 'protectedPushoverPriority', 'reversalPushoverPriority', 'cancelPushoverPriority',
+		'completedPushoverPriority', 'protectedPushoverPriority', 'safeguardPushoverPriority', 'decayPushoverPriority', 'cancelPushoverPriority',
 		'wantEmergencyAlerts',
 		'token', 'userkey', 'webhook',
 		'trackingApiKey', 'enableTracking',
@@ -392,7 +399,8 @@ function restoreAll() {
 		completedSwitch.checked = res.completedAlertSwitchState;
 		cooldownSwitch.checked = res.cooldownSwitchState;
 		protectedSwitch.checked = res.wantProtectedAlert;
-		reversalSwitch.checked = res.wantReversalAlert;
+		safeguardAlertSwitch.checked = res.wantSafeguardAlert ?? false;
+		decayAlertSwitch.checked = res.wantDecayAlert ?? false;
 		cancelAlertSwitch.checked = res.cancelAlertSwitchState;
 		emergencySwitch.checked = res.wantEmergencyAlerts;
 
@@ -401,7 +409,8 @@ function restoreAll() {
 		cooldownPriorityInput.value = res.cooldownPushoverPriority ?? 0;
 		completedPriorityInput.value = res.completedPushoverPriority ?? 0;
 		protectedPriorityInput.value = res.protectedPushoverPriority ?? 0;
-		reversalPriorityInput.value = res.reversalPushoverPriority ?? 0;
+		safeguardPriorityInput.value = res.safeguardPushoverPriority ?? 0;
+		decayPriorityInput.value = res.decayPushoverPriority ?? 0;
 		cancelPriorityInput.value = res.cancelPushoverPriority ?? 0;
 
 		inputToken.placeholder = res.token ? '*******' : 'Pushover Token';

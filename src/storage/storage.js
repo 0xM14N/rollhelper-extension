@@ -18,12 +18,14 @@ const updateSettings = async () => {
 		{ withdrawPushoverPriority },
 		{ cooldownPushoverPriority },
 		{ completedPushoverPriority },
-		{ reversalPushoverPriority },
+		{ safeguardPushoverPriority },
 		{ protectedPushoverPriority },
-		{ wantReversalAlert },
+		{ wantSafeguardAlert },
 		{ wantProtectedAlert },
 		{ wantCancelAlert },
 		{ cancelPushoverPriority },
+		{ wantDecayAlert },
+		{ decayPushoverPriority },
 		{ trackingApiKey },
 		{ enableTracking },
 		{ wantAutoCancelOffers },
@@ -70,12 +72,14 @@ const updateSettings = async () => {
 		chrome.storage.sync.get(['withdrawPushoverPriority']),
 		chrome.storage.sync.get(['cooldownPushoverPriority']),
 		chrome.storage.sync.get(['completedPushoverPriority']),
-		chrome.storage.sync.get(['reversalPushoverPriority']),
+		chrome.storage.sync.get(['safeguardPushoverPriority']),
 		chrome.storage.sync.get(['protectedPushoverPriority']),
-		chrome.storage.sync.get(['wantReversalAlert']),
+		chrome.storage.sync.get(['wantSafeguardAlert']),
 		chrome.storage.sync.get(['wantProtectedAlert']),
 		chrome.storage.sync.get(['wantCancelAlert']),
 		chrome.storage.sync.get(['cancelPushoverPriority']),
+		chrome.storage.sync.get(['wantDecayAlert']),
+		chrome.storage.sync.get(['decayPushoverPriority']),
 		chrome.storage.sync.get(['trackingApiKey']),
 		chrome.storage.sync.get(['enableTracking']),
 		chrome.storage.sync.get(['wantAutoCancelOffers']),
@@ -110,7 +114,7 @@ const updateSettings = async () => {
 	completedAlert = wantCompletedAlert;
 	cooldownAlert = wantCooldownAlert;
 	protectedAlert = wantProtectedAlert
-	reversalAlert = wantReversalAlert
+	safeguardAlert = wantSafeguardAlert ?? false
 	cancelAlert = wantCancelAlert
 	discord = dcNotifyState;
 	withdrawAlert = wantWithdrawalAlert;
@@ -127,9 +131,11 @@ const updateSettings = async () => {
 	withdrawNotifPriority = withdrawPushoverPriority
 	cooldownNotifPriority = cooldownPushoverPriority
 	completedNotifPriority = completedPushoverPriority
-	reversalNotifPriority =  reversalPushoverPriority
+	safeguardNotifPriority = Number(safeguardPushoverPriority) || 0
 	protectedNotifPriority = protectedPushoverPriority
 	cancelNotifPriority = cancelPushoverPriority
+	decayAlert = wantDecayAlert ?? false
+	decayNotifPriority = Number(decayPushoverPriority) || 0
 
 	trackingKey = trackingApiKey
 	wantTracking = enableTracking

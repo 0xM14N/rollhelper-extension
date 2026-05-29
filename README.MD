@@ -24,10 +24,11 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
-### v1.4.7 — 2026-05-26
-- Added notification switch for steam offer cancel
-- Added developer section in popup
-- Added Links to CSP new free lookup view
+### v1.4.9 — 2026-05-29
+- UI price injection fix for new roll UI #2
+- Added notification switch for item-decay
+- Added notification switch for Safeguard anti-depo
+- Please report any issues with new UI stuff on CSP dc or my DC: maintrades
 
 
 ### v1.4.5 — 2026-05-05

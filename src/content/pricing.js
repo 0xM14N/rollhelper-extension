@@ -152,7 +152,9 @@ function isCardVisible(card) {
     if (cx < 0 || cy < 0 || cx > window.innerWidth || cy > window.innerHeight) return true;
     const top = document.elementFromPoint(cx, cy);
     if (!top) return true;
-    return card.contains(top) || card === top;
+    if (card.contains(top) || card === top) return true;
+
+    return !top.closest('.deposit-section-promo, [class*="payment-anim"]');
 }
 
 function sweepCoveredOverlays() {
@@ -242,6 +244,14 @@ function refreshAllOverlays() {
     });
 }
 
+const WEAR_ABBR = {
+    FN: 'Factory New',
+    MW: 'Minimal Wear',
+    FT: 'Field-Tested',
+    WW: 'Well-Worn',
+    BS: 'Battle-Scarred',
+};
+
 const VARIANT_COLORS = {
     'Sticker': {
         'rgb(156,102,255)': 'Holo',
@@ -298,6 +308,17 @@ function getPricing(card, include_pricing = "true") {
     let exterior = null;
     const wearMatch = alt.match(/\(([^)]+)\)\s*$/);
     if (wearMatch) exterior = wearMatch[1].trim();
+
+    // fallback: deposit-page cards omit the wear from alt; it lives in the
+    // float-bar span as "FN - 0.020" / "BS - 0.812" / etc. Match by text pattern.
+    if (!exterior) {
+        const wearSpan = Array.from(card.querySelectorAll('span'))
+            .find(sp => /^(FN|MW|FT|WW|BS)\b/.test((sp.textContent || '').trim()));
+        if (wearSpan) {
+            const abbr = wearSpan.textContent.trim().match(/^(FN|MW|FT|WW|BS)\b/)[1];
+            exterior = WEAR_ABBR[abbr];
+        }
+    }
     if (exterior) itemInfo.wear = exterior;
 
     // --- build the market name: "<category> | <skin>", then "(wear)" for weapon skins ---
@@ -530,6 +551,7 @@ function liqClass(liq) {
 }
 
 function createOverlay(data) {
+    // console.log(data)
     const overlay = document.createElement('div');
     overlay.className = 'buff-overlay';
 
@@ -562,6 +584,7 @@ function createOverlay(data) {
     }
 
     if (data.error) {
+        // console.log(data.error)
         const err = document.createElement('div');
         err.className = 'rh-row rh-err';
         err.textContent = 'no price';
