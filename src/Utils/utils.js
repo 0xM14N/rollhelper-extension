@@ -1,5 +1,5 @@
 // dev flag for CSP local dev
-const CSP_DEV = true;
+const CSP_DEV = false;
 const CSP_BASE = CSP_DEV ? 'http://localhost:3000' : 'https://cspricebase.com';
 
 noticeCSSlog = 'color:#00FFFFFF;background-color:black;font-weight: bold; font-size:13px';
