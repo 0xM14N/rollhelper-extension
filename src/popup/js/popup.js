@@ -68,6 +68,8 @@ let saveNotifBtn = document.getElementById('saveNotifications');
 let trackingKeyInput = document.getElementById('cspTrackingKey');
 let trackingSwitch = document.getElementById('trackingSwitch');
 let saveTrackingBtn = document.getElementById('saveTracking');
+let userIdValue = document.getElementById('csgorollUserId');
+let copyUserIdBtn = document.getElementById('copyUserIdBtn');
 
 // === Elements: Pricing ===
 let cspApiKeyInput = document.getElementById('cspApiKey');
@@ -85,9 +87,18 @@ let usdRateInput = document.getElementById('usdRate');
 let logSkinLinkSwitch = document.getElementById('logSkinLinkSwitch');
 let logDbLinkSwitch = document.getElementById('logDbLinkSwitch');
 let cardLinkSkinSwitch = document.getElementById('cardLinkSkinSwitch');
+let exportConfigBtn = document.getElementById('exportConfigBtn');
+let configDropzone = document.getElementById('configDropzone');
+let configPaste = document.getElementById('configPaste');
+let importPasteBtn = document.getElementById('importPasteBtn');
+let configStatus = document.getElementById('configStatus');
 
 // === Init ===
 document.addEventListener('DOMContentLoaded', restoreAll);
+
+// Version label — single source of truth is manifest.json
+const footerVersionEl = document.getElementById('footerVersion');
+if (footerVersionEl) footerVersionEl.textContent = `v${chrome.runtime.getManifest().version}`;
 
 // === Session Cookie ===
 sessionBtn.addEventListener('click', () => {
@@ -280,6 +291,22 @@ saveNotifBtn.addEventListener('click', async function () {
 // =====================
 // DASHBOARD PAGE
 // =====================
+copyUserIdBtn.addEventListener('click', async function () {
+	const id = copyUserIdBtn.dataset.userid;
+	if (!id) return;
+	try {
+		await navigator.clipboard.writeText(id);
+		copyUserIdBtn.textContent = 'Copied!';
+		copyUserIdBtn.disabled = true;
+		setTimeout(() => {
+			copyUserIdBtn.textContent = 'Copy';
+			copyUserIdBtn.disabled = false;
+		}, 1000);
+	} catch (err) {
+		console.error('Failed to copy user ID:', err);
+	}
+});
+
 trackingSwitch.addEventListener('change', function () {
 	chrome.storage.sync.set({ enableTracking: this.checked }, () => callUpdateStorage());
 });
@@ -351,6 +378,124 @@ cardLinkSkinSwitch.addEventListener('change', function () {
 });
 
 // =====================
+// BACKUP & RESTORE
+// =====================
+
+const CONFIG_EXCLUDE_KEYS = ['currentUserId'];
+
+function showConfigStatus(msg, ok) {
+	configStatus.textContent = msg;
+	configStatus.className = 'config-status ' + (ok ? 'is-ok' : 'is-error');
+	configStatus.hidden = false;
+}
+
+let configFlashTimer;
+function flashConfigImported(count) {
+	const textEl = configDropzone.querySelector('.config-dropzone-text');
+	const original = 'Drop config file here to import';
+	clearTimeout(configFlashTimer);
+	configDropzone.classList.remove('is-success'); // restart the animation
+	void configDropzone.offsetWidth;
+	configDropzone.classList.add('is-success');
+	if (textEl) textEl.textContent = `Imported ${count} settings`;
+	configFlashTimer = setTimeout(() => {
+		configDropzone.classList.remove('is-success');
+		if (textEl) textEl.textContent = original;
+	}, 2500);
+}
+
+exportConfigBtn.addEventListener('click', async function () {
+	try {
+		const all = await chrome.storage.sync.get(null);
+		for (const key of CONFIG_EXCLUDE_KEYS) delete all[key];
+
+		const manifest = chrome.runtime.getManifest();
+		const payload = {
+			_meta: {
+				app: 'rollhelper',
+				version: manifest.version,
+				exportedAt: new Date().toISOString(),
+			},
+			settings: all,
+		};
+
+		const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const stamp = new Date().toISOString().slice(0, 10);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `rollhelper-config-v${manifest.version}-${stamp}.json`;
+		document.body.appendChild(a);
+		a.click();
+		a.remove();
+		setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+		showConfigStatus('Config exported.', true);
+	} catch (err) {
+		console.error('Export failed:', err);
+		showConfigStatus('Export failed: ' + err.message, false);
+	}
+});
+
+async function importConfigFromText(text) {
+	try {
+		const parsed = JSON.parse(text);
+
+		let settings = (parsed && typeof parsed.settings === 'object' && parsed.settings)
+			? parsed.settings
+			: parsed;
+
+		if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+			throw new Error('not a valid rollhelper config file');
+		}
+
+		delete settings._meta;
+		for (const key of CONFIG_EXCLUDE_KEYS) delete settings[key];
+
+		const keys = Object.keys(settings);
+		if (keys.length === 0) throw new Error('no settings found in file');
+
+		await chrome.storage.sync.set(settings);
+		await callUpdateStorage();
+		restoreAll();
+		configPaste.value = '';
+		flashConfigImported(keys.length);
+		showConfigStatus(`Imported ${keys.length} settings.`, true);
+	} catch (err) {
+		console.error('Import failed:', err);
+		showConfigStatus('Import failed: ' + err.message, false);
+	}
+}
+
+// Drag n drop a config file
+['dragenter', 'dragover'].forEach(evt =>
+	configDropzone.addEventListener(evt, (e) => {
+		e.preventDefault();
+		configDropzone.classList.add('is-dragover');
+	})
+);
+['dragleave', 'dragend'].forEach(evt =>
+	configDropzone.addEventListener(evt, () => configDropzone.classList.remove('is-dragover'))
+);
+configDropzone.addEventListener('drop', async (e) => {
+	e.preventDefault();
+	configDropzone.classList.remove('is-dragover');
+	const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+	if (!file) return;
+	await importConfigFromText(await file.text());
+});
+
+
+importPasteBtn.addEventListener('click', () => {
+	const text = configPaste.value.trim();
+	if (!text) {
+		showConfigStatus('Paste a config first.', false);
+		return;
+	}
+	importConfigFromText(text);
+});
+
+// =====================
 // RESTORE ALL
 // =====================
 function restoreAll() {
@@ -367,7 +512,7 @@ function restoreAll() {
 		'completedPushoverPriority', 'protectedPushoverPriority', 'safeguardPushoverPriority', 'decayPushoverPriority', 'cancelPushoverPriority',
 		'wantEmergencyAlerts',
 		'token', 'userkey', 'webhook',
-		'trackingApiKey', 'enableTracking',
+		'trackingApiKey', 'enableTracking', 'currentUserId',
 		'cspApi', 'enablePricingOverlay',
 		'pricingShowBuff', 'pricingShowCsf', 'pricingShowUu', 'pricingShowInflated', 'pricingShowLiquidity', 'pricingShowUsdPrice', 'pricingUsdRate',
 		'logCspSkinLink', 'logCspDbLink', 'cardLinkSkinPage'
@@ -420,6 +565,15 @@ function restoreAll() {
 		// Dashboard
 		trackingKeyInput.placeholder = res.trackingApiKey ? '*******' : 'TRACKING-KEY';
 		trackingSwitch.checked = res.enableTracking;
+		if (res.currentUserId) {
+			userIdValue.textContent = res.currentUserId;
+			copyUserIdBtn.dataset.userid = res.currentUserId;
+			copyUserIdBtn.disabled = false;
+		} else {
+			userIdValue.textContent = 'Open CSGORoll to load…';
+			delete copyUserIdBtn.dataset.userid;
+			copyUserIdBtn.disabled = true;
+		}
 
 		// Pricing
 		cspApiKeyInput.placeholder = res.cspApi ? '*******' : 'API-KEY';

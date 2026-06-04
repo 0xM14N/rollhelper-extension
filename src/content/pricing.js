@@ -545,7 +545,8 @@ function makeCspLink(cspurl) {
 }
 
 function liqClass(liq) {
-    if (liq >= 70) return 'rh-liq-high';
+    if (liq >= 85) return 'rh-liq-high';
+    if (liq >= 65) return 'rh-liq-good';
     if (liq >= 40) return 'rh-liq-mid';
     return 'rh-liq-low';
 }
@@ -645,7 +646,7 @@ function createOverlay(data) {
         const liqEl = document.createElement('div');
         liqEl.className = `rh-liq ${liqClass(data.liquidity)}`;
         liqEl.title = 'Market liquidity';
-        liqEl.innerHTML = `<span class="rh-liq-label">LIQ</span><span class="rh-liq-val">${data.liquidity}%</span>`;
+        liqEl.innerHTML = `<svg class="rh-liq-drop" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5S5.5 9.8 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 9.8 12 2.5 12 2.5z"/></svg><span class="rh-liq-val">${data.liquidity}%</span>`;
         container.appendChild(liqEl);
     }
 
@@ -827,21 +828,23 @@ function injectStyles() {
         background: rgba(15, 18, 24, 0.82);
         border: 1px solid rgba(255,255,255,0.06);
         border-radius: 999px;
-        font-size: 10px;
+        font-size: 13px;
         font-weight: 600;
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
         pointer-events: auto;
     }
-    .rh-liq-label {
-        color: #6b7280;
-        letter-spacing: 0.5px;
-        font-size: 9px;
+    .rh-liq-drop {
+        width: 13px;
+        height: 13px;
+        fill: #38bdf8;
+        flex-shrink: 0;
     }
-    .rh-liq-val { font-weight: 700; }
+    .rh-liq-val { font-weight: 600; }
     .rh-liq-high .rh-liq-val { color: #3bd671; }
-    .rh-liq-mid  .rh-liq-val { color: #ffd166; }
-    .rh-liq-low  .rh-liq-val { color: #ff8a8a; }
+    .rh-liq-good .rh-liq-val { color: #ffd166; }
+    .rh-liq-mid  .rh-liq-val { color: #ff9f43; }
+    .rh-liq-low  .rh-liq-val { color: #ff5e5e; }
 
     .rh-inflated {
         display: inline-flex;

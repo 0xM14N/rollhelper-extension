@@ -49,7 +49,6 @@
 		</nav>
 
 		<div class="sidebar-footer">
-			<button id="copy-session-btn" class="session-button">Copy Session</button>
 			<div class="footer-credit">
 				<span class="footer-text">Created by</span>
 				<a href="https://github.com/0xM14N" target="_blank">
@@ -59,7 +58,7 @@
 					</button>
 				</a>
 			</div>
-			<span class="footer-version">v1.4.9</span>
+			<span class="footer-version" id="footerVersion"></span>
 		</div>
 	</div>
 
@@ -269,7 +268,16 @@
 		<!-- PAGE: Dashboard -->
 		<div class="page page-centered" id="page-dashboard">
 			<div class="section-title">Trade Tracking</div>
-			<div class="page-desc">Track your csgoroll trades into your personal dashboard on CSPricebase.</div>
+			<div class="page-desc">Track your csgoroll trades into your personal dashboard on CSPricebase. <a href="https://cspricebase.com/trades-tracker" target="_blank" class="desc-link">Learn more →</a></div>
+
+			<div class="userid-card">
+				<span class="userid-label">Your CSGORoll User ID</span>
+				<div class="userid-value-row">
+					<code class="userid-value" id="csgorollUserId">Open CSGORoll to load…</code>
+					<button class="userid-copy-btn" id="copyUserIdBtn" type="button" disabled>Copy</button>
+				</div>
+				<span class="userid-hint">Needed to set up tracking for your dashboard.</span>
+			</div>
 
 			<div class="page-form">
 				<div class="input-row">
@@ -385,8 +393,26 @@
 					<span class="toggle-label">Open Skin Page</span>
 					<label class="switch switch-sm"><input type="checkbox" id="cardLinkSkinSwitch" /><span class="slider"></span></label>
 				</div>
+				<button id="copy-session-btn" class="session-button session-button-inline">Copy Session</button>
 			</div>
 			<span class="priority-hint">On → free /skins page (default). Off → full /database lookup.</span>
+
+			<div class="section-title">Backup &amp; Restore</div>
+			<div class="page-desc">
+				Export every setting and API key to a file on your PC, then restore it after reinstalling the extension.
+			</div>
+			<div class="config-actions">
+				<button class="modern-button-link" id="exportConfigBtn" type="button">Export Config</button>
+			</div>
+			<div class="config-dropzone" id="configDropzone">
+				<span class="config-dropzone-text">Drop config file here to import</span>
+			</div>
+			<textarea class="config-paste" id="configPaste" placeholder="…or paste config JSON here"></textarea>
+			<div class="config-actions">
+				<button class="modern-button-link secondary" id="importPasteBtn" type="button">Import Pasted Config</button>
+			</div>
+			<span class="config-status" id="configStatus" hidden></span>
+			<span class="priority-hint">The exported file contains your API keys in plain text — keep it private and never share it.</span>
 		</div>
 
 		<!-- PAGE: Updates -->

@@ -24,6 +24,13 @@ The extension connects to [CSPricebase](https://cspricebase.com) for live pricin
 
 ## Changelog
 
+### v1.5.0 — 2026-06-04
+- Developer setting: full extension config export/import (When you reinstall you just upload your old config - no need to rewrite all of it manually)
+- Adjusted pricing UI (liquidity indicator)
+- Developer setting: Copy Session button now lives in developer options
+
+
+
 ### v1.4.9 — 2026-05-29
 - UI price injection fix for new roll UI #2
 - Added notification switch for item-decay

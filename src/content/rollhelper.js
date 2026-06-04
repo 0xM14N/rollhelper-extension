@@ -1,4 +1,4 @@
-let version = `1.4.9`;
+let version = chrome.runtime.getManifest().version;
 
 console.log(
     `%cROLLHELPER by CSPricebase.com %cversion ${version}`,

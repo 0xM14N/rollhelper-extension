@@ -1,5 +1,4 @@
 .idea/
-node_modules/
-
+.claude
 # Chrome auto-generates this when loading the unpacked extension (declarativeNetRequest)
 _metadata/
