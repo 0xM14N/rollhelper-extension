@@ -704,6 +704,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 chrome.runtime.onInstalled.addListener(details => {
 	if (details.reason === 'install') {
+		chrome.tabs.create({ url: 'https://rollhelper.cspricebase.com', active: true });
+
 		chrome.storage.sync.set(
 			{
 				steamOfferMessage: null,

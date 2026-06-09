@@ -123,6 +123,26 @@ body {
 	border-radius: 10px;
 }
 
+.footer-website-link {
+	font-size: 9px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: #6b7280;
+	text-decoration: none;
+	padding: 3px 8px;
+	border-radius: 6px;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(255, 255, 255, 0.02);
+	transition: all 0.2s ease;
+}
+
+.footer-website-link:hover {
+	color: #34d399;
+	border-color: rgba(52, 211, 153, 0.3);
+	background: rgba(52, 211, 153, 0.08);
+}
+
 .footer-credit {
 	text-align: center;
 }
